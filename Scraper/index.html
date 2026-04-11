@@ -1,980 +1,345 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>San Diego County — Motivated Seller Leads</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Bexar County, TX Motivated Seller Leads</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:       #0b0d12;
-    --surface:  #13161f;
-    --border:   #1e2233;
-    --text:     #e2e8f0;
-    --muted:    #64748b;
-    --accent:   #6366f1;
-    --red:      #ef4444;
-    --orange:   #f97316;
-    --green:    #22c55e;
-    --hot-bg:   rgba(239,68,68,0.05);
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    min-height: 100vh;
-  }
-
-  /* ── HEADER ── */
-  header {
-    background: linear-gradient(135deg, #0f1117 0%, #13161f 50%, #0a0c14 100%);
-    border-bottom: 1px solid var(--border);
-    padding: 2rem 2.5rem 1.5rem;
-    position: relative;
-    overflow: hidden;
-  }
-  header::before {
-    content: '';
-    position: absolute;
-    top: -80px; right: -80px;
-    width: 320px; height: 320px;
-    background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .header-inner {
-    max-width: 1600px;
-    margin: 0 auto;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 2rem;
-    flex-wrap: wrap;
-  }
-  .header-brand { display: flex; flex-direction: column; gap: 0.25rem; }
-  .eyebrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--accent);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-  }
-  h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(1.6rem, 3vw, 2.4rem);
-    font-weight: 800;
-    line-height: 1.1;
-    background: linear-gradient(135deg, #e2e8f0 30%, #6366f1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .subtitle {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 0.25rem;
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* ── STAT CARDS ── */
-  .stats {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  .stat-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1rem 1.4rem;
-    min-width: 110px;
-    text-align: center;
-  }
-  .stat-card .num {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.8rem;
-    font-weight: 800;
-    line-height: 1;
-  }
-  .stat-card .lbl {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 0.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-  .num-hot    { color: var(--red); }
-  .num-warm   { color: var(--orange); }
-  .num-cold   { color: var(--green); }
-  .num-total  { color: var(--accent); }
-  .num-avg    { color: #94a3b8; }
-
-  /* ── FILTER BAR ── */
-  .filter-bar {
-    max-width: 1600px;
-    margin: 1.5rem auto 0;
-    padding: 0 2.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  .filter-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--muted);
-    cursor: pointer;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    padding: 0.5rem 1rem;
-    transition: all 0.15s;
-  }
-  .filter-btn:hover, .filter-btn.active {
-    border-color: var(--accent);
-    color: var(--text);
-    background: rgba(99,102,241,0.1);
-  }
-  .search-box {
-    margin-left: auto;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 13px;
-    padding: 0.5rem 1rem;
-    width: 220px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .search-box:focus { border-color: var(--accent); }
-  .search-box::placeholder { color: var(--muted); }
-
-  /* ── TABLE ── */
-  .table-wrap {
-    max-width: 1600px;
-    margin: 1.5rem auto 3rem;
-    padding: 0 2.5rem;
-    overflow-x: auto;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-  }
-  thead th {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    padding: 0.9rem 1rem;
-    text-align: left;
-    text-transform: uppercase;
-    white-space: nowrap;
-    cursor: pointer;
-    user-select: none;
-  }
-  thead th:hover { color: var(--text); }
-  thead th::after { content: ' ↕'; opacity: 0.4; font-size: 10px; }
-
-  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
-  tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: rgba(255,255,255,0.03); }
-  tbody tr.hot-row { background: var(--hot-bg); }
-  tbody tr.hidden { display: none; }
-
-  td {
-    padding: 0.85rem 1rem;
-    vertical-align: middle;
-  }
-  .rank {
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    text-align: center;
-    min-width: 2.5rem;
-  }
-
-  /* Score circle */
-  .score-circle {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    border: 2px solid var(--c, #22c55e);
-    color: var(--c, #22c55e);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 15px;
-    margin: 0 auto 4px;
-  }
-  .score-label {
-    text-align: center;
-    font-size: 10px;
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-  }
-
-  .doc-num  { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
-  .name     { font-weight: 500; white-space: nowrap; }
-  .address  { color: #94a3b8; font-size: 13px; max-width: 180px; }
-  .legal    { color: var(--muted); font-size: 12px; max-width: 220px; line-height: 1.4; }
-  .flags    { min-width: 220px; }
-
-  /* Badges */
-  .badge {
-    border-radius: 5px;
-    display: inline-block;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    font-weight: 500;
-    margin: 2px 2px 2px 0;
-    padding: 2px 7px;
-    white-space: nowrap;
-  }
-  .badge-active  { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
-  .badge-inactive { background: rgba(255,255,255,0.04); color: #334155; border: 1px solid transparent; }
-
-  /* ── FOOTER ── */
-  footer {
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    padding: 1.25rem 2.5rem;
-    text-align: center;
-  }
-
-  @media (max-width: 768px) {
-    header, .filter-bar, .table-wrap { padding-left: 1rem; padding-right: 1rem; }
-    .stats { gap: 0.5rem; }
-    .stat-card { min-width: 80px; padding: 0.75rem 1rem; }
-    .search-box { width: 100%; margin-left: 0; }
-  }
-</style>
-</head>
-<body>
-
-<header>
-  <div class="header-inner">
-    <div class="header-brand">
-      <div class="eyebrow">🏠 Motivated Seller Intelligence</div>
-      <h1>San Diego County<br>Lead Dashboard</h1>
-      <div class="subtitle">Generated April 11, 2026 at 04:05 UTC &nbsp;·&nbsp; 35 records indexed</div>
-    </div>
-    <div class="stats">
-      <div class="stat-card"><div class="num num-hot">0</div><div class="lbl">🔥 Hot</div></div>
-      <div class="stat-card"><div class="num num-warm">4</div><div class="lbl">⚠️ Warm</div></div>
-      <div class="stat-card"><div class="num num-cold">31</div><div class="lbl">✓ Cold</div></div>
-      <div class="stat-card"><div class="num num-total">35</div><div class="lbl">Total</div></div>
-      <div class="stat-card"><div class="num num-avg">14.7</div><div class="lbl">Avg Score</div></div>
-    </div>
+:root{--bg:#0b0d12;--surface:#13161f;--border:#1e2233;--text:#e2e8f0;--muted:#64748b;--accent:#6366f1;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;}
+header{background:linear-gradient(135deg,#0f1117,#13161f);border-bottom:1px solid var(--border);padding:2rem 2.5rem;}
+.header-inner{max-width:1600px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;flex-wrap:wrap;}
+.eyebrow{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;}
+h1{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,#e2e8f0 30%,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.subtitle{font-size:13px;color:var(--muted);margin-top:.25rem;font-family:'DM Mono',monospace;}
+.stats{display:flex;gap:1rem;flex-wrap:wrap;}
+.stat-card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:1rem 1.4rem;min-width:110px;text-align:center;}
+.stat-card .num{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;line-height:1;}
+.stat-card .lbl{font-size:11px;color:var(--muted);margin-top:.25rem;text-transform:uppercase;letter-spacing:.1em;}
+.num-hot{color:#ef4444;}.num-warm{color:#f97316;}.num-cold{color:#22c55e;}.num-total{color:var(--accent);}.num-avg{color:#94a3b8;}
+.filter-bar{max-width:1600px;margin:1.5rem auto 0;padding:0 2.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.filter-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;padding:.5rem 1rem;transition:all .15s;}
+.filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--text);background:rgba(99,102,241,.1);}
+.search-box{margin-left:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:.5rem 1rem;width:220px;outline:none;}
+.search-box:focus{border-color:var(--accent);}.search-box::placeholder{color:var(--muted);}
+.table-wrap{max-width:1600px;margin:1.5rem auto 3rem;padding:0 2.5rem;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+thead th{background:var(--surface);border-bottom:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;padding:.9rem 1rem;text-align:left;text-transform:uppercase;white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:hover{background:rgba(255,255,255,.03);}.hot-row{background:rgba(239,68,68,.05);}.hidden{display:none;}
+td{padding:.85rem 1rem;vertical-align:middle;}
+.rank{color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;text-align:center;}
+.score-circle{width:44px;height:44px;border-radius:50%;border:2px solid var(--c,#22c55e);color:var(--c,#22c55e);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin:0 auto 4px;}
+.score-label{text-align:center;font-size:10px;font-family:'DM Mono',monospace;}
+.doc-num{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}.name{font-weight:500;white-space:nowrap;}.address{color:#94a3b8;font-size:13px;max-width:180px;}.legal{color:var(--muted);font-size:12px;max-width:220px;line-height:1.4;}.flags{min-width:220px;}
+.badge{border-radius:5px;display:inline-block;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;margin:2px 2px 2px 0;padding:2px 7px;white-space:nowrap;}
+.badge-active{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);}.badge-inactive{background:rgba(255,255,255,.04);color:#334155;border:1px solid transparent;}
+footer{border-top:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;padding:1.25rem;text-align:center;}
+</style></head><body>
+<header><div class="header-inner">
+  <div><div class="eyebrow">Motivated Seller Intelligence</div><h1>Bexar County, TX Lead Dashboard</h1><div class="subtitle">Generated April 11, 2026 at 04:37 UTC &nbsp; 35 records</div></div>
+  <div class="stats">
+    <div class="stat-card"><div class="num num-hot">0</div><div class="lbl">Hot</div></div>
+    <div class="stat-card"><div class="num num-warm">8</div><div class="lbl">Warm</div></div>
+    <div class="stat-card"><div class="num num-cold">27</div><div class="lbl">Cold</div></div>
+    <div class="stat-card"><div class="num num-total">35</div><div class="lbl">Total</div></div>
+    <div class="stat-card"><div class="num num-avg">14.7</div><div class="lbl">Avg Score</div></div>
   </div>
-</header>
-
+</div></header>
 <div class="filter-bar">
   <button class="filter-btn active" onclick="filterRows('all',this)">All Leads</button>
-  <button class="filter-btn" onclick="filterRows('hot',this)">🔥 Hot (50+)</button>
-  <button class="filter-btn" onclick="filterRows('warm',this)">⚠️ Warm (25–49)</button>
-  <button class="filter-btn" onclick="filterRows('cold',this)">✓ Cold (&lt;25)</button>
-  <input class="search-box" type="text" placeholder="🔍  Search name, address…" oninput="searchRows(this.value)">
+  <button class="filter-btn" onclick="filterRows('hot',this)">Hot (50+)</button>
+  <button class="filter-btn" onclick="filterRows('warm',this)">Warm (25-49)</button>
+  <button class="filter-btn" onclick="filterRows('cold',this)">Cold (&lt;25)</button>
+  <input class="search-box" type="text" placeholder="Search name, address..." oninput="searchRows(this.value)">
 </div>
-
-<div class="table-wrap">
-  <table id="leadsTable">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Score</th>
-        <th>Doc #</th>
-        <th>File Date</th>
-        <th>Grantor (Seller)</th>
-        <th>Grantee (Buyer)</th>
-        <th>Address</th>
-        <th>Legal Description</th>
-        <th>Distress Signals</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody">
-      
-        <tr class="record-row ">
+<div class="table-wrap"><table>
+  <thead><tr><th>#</th><th>Score</th><th>Doc #</th><th>Date</th><th>Grantor (Seller)</th><th>Grantee (Buyer)</th><th>Address</th><th>Legal</th><th>Signals</th></tr></thead>
+  <tbody id="tableBody"><tr class="record-row ">
           <td class="rank">#1</td>
-          <td>
-            <div class="score-circle" style="--c:#f97316">
-              30
-            </div>
-            <div class="score-label" style="color:#f97316">
-              ⚠️ WARM
-            </div>
-          </td>
-          <td class="doc-num">2024-0130952</td>
-          <td>06/07/2025</td>
-          <td class="name">Miller, Linda</td>
-          <td class="name">White, Susan</td>
-          <td class="address">3999 Ash Pl, San Diego, CA 92102</td>
-          <td class="legal">Parcel 88244 Tax Lien filed per Revenue Code §552</td>
-          <td class="flags"><span class="badge badge-active">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">30</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">2024-0949503</td><td>08/20/2024</td>
+          <td class="name">Anderson, Michael</td><td class="name">Anderson, Michael</td>
+          <td class="address">2282 Walnut Ln, San Antonio, TX 78281</td>
+          <td class="legal">Lot 57 Block 13 Tax Lien filed per Revenue Code</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#2</td>
-          <td>
-            <div class="score-circle" style="--c:#f97316">
-              30
-            </div>
-            <div class="score-label" style="color:#f97316">
-              ⚠️ WARM
-            </div>
-          </td>
-          <td class="doc-num">2024-0182236</td>
-          <td>04/26/2024</td>
-          <td class="name">Miller, Susan</td>
-          <td class="name">Thomas, Barbara</td>
-          <td class="address">4422 Spruce Way, San Diego, CA 92034</td>
-          <td class="legal">Parcel 61951 Tax Lien filed per Revenue Code §112</td>
-          <td class="flags"><span class="badge badge-active">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">30</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">2024-0646743</td><td>04/19/2023</td>
+          <td class="name">Brown, Maria</td><td class="name">Garcia, Elizabeth</td>
+          <td class="address">5710 Walnut Ln, San Antonio, TX 78260</td>
+          <td class="legal">Lot 15 Block 19 Tax Lien filed per Revenue Code</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#3</td>
-          <td>
-            <div class="score-circle" style="--c:#f97316">
-              25
-            </div>
-            <div class="score-label" style="color:#f97316">
-              ⚠️ WARM
-            </div>
-          </td>
-          <td class="doc-num">2024-0840520</td>
-          <td>07/22/2023</td>
-          <td class="name">Thomas, Maria</td>
-          <td class="name">Martin, David</td>
-          <td class="address">5504 Spruce Way, San Diego, CA 91962</td>
-          <td class="legal">Notice of Code Violation – Abatement Order #84970</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-active">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">30</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">2024-0793499</td><td>09/28/2023</td>
+          <td class="name">Garcia, Maria</td><td class="name">Davis, James</td>
+          <td class="address">4268 Birch Ct, San Antonio, TX 78269</td>
+          <td class="legal">Lot 71 Block 9 Tax Lien filed per Revenue Code</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#4</td>
-          <td>
-            <div class="score-circle" style="--c:#f97316">
-              25
-            </div>
-            <div class="score-label" style="color:#f97316">
-              ⚠️ WARM
-            </div>
-          </td>
-          <td class="doc-num">2024-0773005</td>
-          <td>12/23/2024</td>
-          <td class="name">Brown, William</td>
-          <td class="name">Jackson, James</td>
-          <td class="address">6564 Spruce Way, San Diego, CA 91923</td>
-          <td class="legal">Notice of Code Violation – Abatement Order #33463</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-active">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">25</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">2024-0233386</td><td>02/18/2023</td>
+          <td class="name">Brown, Maria</td><td class="name">Anderson, Patricia</td>
+          <td class="address">7216 Birch Ct, San Antonio, TX 78242</td>
+          <td class="legal">Parcel 91168 Notice of Code Violation Abatement Order</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-active">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#5</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0504498</td>
-          <td>04/15/2024</td>
-          <td class="name">Brown, William</td>
-          <td class="name">Thomas, Thomas</td>
-          <td class="address">8652 Elm Dr, San Diego, CA 92147</td>
-          <td class="legal">Lot 27 Block 3 Probate – Letters Testamentary Issued</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">25</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">2024-0776614</td><td>03/05/2023</td>
+          <td class="name">Brown, Robert</td><td class="name">Johnson, Maria</td>
+          <td class="address">7435 Pine Rd, San Antonio, TX 78220</td>
+          <td class="legal">Parcel 42906 Notice of Code Violation Abatement Order</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-active">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#6</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0213292</td>
-          <td>05/27/2025</td>
-          <td class="name">Anderson, Maria</td>
-          <td class="name">White, Jessica</td>
-          <td class="address">5303 Ash Pl, San Diego, CA 92012</td>
-          <td class="legal">Lot 17 Block 2 Probate – Letters Testamentary Issued</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">25</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">2024-0195522</td><td>08/01/2023</td>
+          <td class="name">Williams, James</td><td class="name">Brown, Michael</td>
+          <td class="address">6815 Pine Rd, San Antonio, TX 78292</td>
+          <td class="legal">Parcel 86233 Notice of Code Violation Abatement Order</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-active">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#7</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0380935</td>
-          <td>05/20/2023</td>
-          <td class="name">Brown, Karen</td>
-          <td class="name">Brown, Barbara</td>
-          <td class="address">3867 Hickory Rd, San Diego, CA 92190</td>
-          <td class="legal">Lot 38 Block 11 Probate – Letters Testamentary Issued</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">25</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">2024-0763371</td><td>07/21/2023</td>
+          <td class="name">Johnson, David</td><td class="name">Wilson, Elizabeth</td>
+          <td class="address">6712 Cedar Blvd, San Antonio, TX 78228</td>
+          <td class="legal">Parcel 60898 Notice of Code Violation Abatement Order</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-active">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#8</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0337781</td>
-          <td>07/20/2024</td>
-          <td class="name">Taylor, Maria</td>
-          <td class="name">Garcia, Barbara</td>
-          <td class="address">8390 Pine Rd, San Diego, CA 92195</td>
-          <td class="legal">Lot 43, Block 12, Tract 1302 Estate of Taylor, Maria</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">25</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">2024-0269541</td><td>01/27/2023</td>
+          <td class="name">Jones, William</td><td class="name">Brown, Maria</td>
+          <td class="address">5965 Elm Dr, San Antonio, TX 78282</td>
+          <td class="legal">Parcel 40567 Notice of Code Violation Abatement Order</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-active">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#9</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0994878</td>
-          <td>02/04/2025</td>
-          <td class="name">Smith, William</td>
-          <td class="name">Jackson, Susan</td>
-          <td class="address">3044 Ash Pl, San Diego, CA 91900</td>
-          <td class="legal">Lot 76, Block 12, Tract 6688 Estate of Smith, William</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">20</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0260184</td><td>06/01/2024</td>
+          <td class="name">Jones, Maria</td><td class="name">Johnson, David</td>
+          <td class="address">8337 Maple Ave, San Antonio, TX 78227</td>
+          <td class="legal">Lot 14 Block 4 Probate Letters Testamentary Issued</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#10</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0628739</td>
-          <td>07/25/2023</td>
-          <td class="name">Johnson, Susan</td>
-          <td class="name">Brown, Thomas</td>
-          <td class="address">8103 Elm Dr, San Diego, CA 91993</td>
-          <td class="legal">Lot 91, Block 7, Tract 3895 Estate of Johnson, Susan</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">20</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0424556</td><td>02/19/2024</td>
+          <td class="name">Brown, Michael</td><td class="name">Brown, David</td>
+          <td class="address">5906 Walnut Ln, San Antonio, TX 78282</td>
+          <td class="legal">Lot 88 Block 20 Probate Letters Testamentary Issued</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#11</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0458716</td>
-          <td>12/15/2024</td>
-          <td class="name">Martin, Robert</td>
-          <td class="name">Johnson, Susan</td>
-          <td class="address">4398 Hickory Rd, San Diego, CA 92181</td>
-          <td class="legal">Lot 95 Block 16 Probate – Letters Testamentary Issued</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">20</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0975232</td><td>11/10/2025</td>
+          <td class="name">Jones, Linda</td><td class="name">Miller, Maria</td>
+          <td class="address">7939 Cedar Blvd, San Antonio, TX 78258</td>
+          <td class="legal">Lot 25 Block 4 Probate Letters Testamentary Issued</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#12</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0116018</td>
-          <td>02/04/2025</td>
-          <td class="name">White, Elizabeth</td>
-          <td class="name">Williams, Joseph</td>
-          <td class="address">6233 Hickory Rd, San Diego, CA 91953</td>
-          <td class="legal">Lot 66 Block 14 Probate – Letters Testamentary Issued</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">20</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0127074</td><td>07/11/2023</td>
+          <td class="name">Johnson, Linda</td><td class="name">Brown, Elizabeth</td>
+          <td class="address">1061 Cedar Blvd, San Antonio, TX 78218</td>
+          <td class="legal">Lot 31 Block 6 Probate Letters Testamentary Issued</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#13</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0130100</td>
-          <td>04/27/2024</td>
-          <td class="name">Harris, Elizabeth</td>
-          <td class="name">Garcia, Elizabeth</td>
-          <td class="address">551 Elm Dr, San Diego, CA 91975</td>
-          <td class="legal">Lot 82, Block 5, Tract 8847 Estate of Harris, Elizabeth</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">20</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0431811</td><td>02/08/2024</td>
+          <td class="name">Anderson, Barbara</td><td class="name">Garcia, Maria</td>
+          <td class="address">9675 Maple Ave, San Antonio, TX 78208</td>
+          <td class="legal">Lot 79 Block 17 Probate Letters Testamentary Issued</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#14</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0447093</td>
-          <td>08/24/2023</td>
-          <td class="name">White, Elizabeth</td>
-          <td class="name">Martin, Maria</td>
-          <td class="address">5313 Maple Ave, San Diego, CA 91900</td>
-          <td class="legal">Lot 12 Block 14 Probate – Letters Testamentary Issued</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0107275</td><td>07/16/2025</td>
+          <td class="name">Brown, James</td><td class="name">Miller, Robert</td>
+          <td class="address">3999 Cedar Blvd, San Antonio, TX 78290</td>
+          <td class="legal">Notice of Default Lis Pendens filed</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#15</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0403229</td>
-          <td>05/05/2024</td>
-          <td class="name">Johnson, Barbara</td>
-          <td class="name">Johnson, Thomas</td>
-          <td class="address">8636 Maple Ave, San Diego, CA 92034</td>
-          <td class="legal">Lot 89 Block 2 Probate – Letters Testamentary Issued</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0533590</td><td>06/12/2025</td>
+          <td class="name">Smith, Maria</td><td class="name">Miller, Michael</td>
+          <td class="address">4613 Oak St, San Antonio, TX 78222</td>
+          <td class="legal">Lot 40 Block 16 Mechanic Lien Multiple Liens Recorded</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#16</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              20
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0701810</td>
-          <td>09/18/2025</td>
-          <td class="name">Wilson, Karen</td>
-          <td class="name">Brown, Barbara</td>
-          <td class="address">5631 Elm Dr, San Diego, CA 92164</td>
-          <td class="legal">Lot 86, Block 15, Tract 9289 Estate of Wilson, Karen</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0484419</td><td>07/10/2025</td>
+          <td class="name">Johnson, Linda</td><td class="name">Wilson, Linda</td>
+          <td class="address">9925 Spruce Way, San Antonio, TX 78224</td>
+          <td class="legal">Lot 24 Block 14 Mechanic Lien Multiple Liens Recorded</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#17</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              15
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0480786</td>
-          <td>01/23/2023</td>
-          <td class="name">Davis, Robert</td>
-          <td class="name">Brown, Susan</td>
-          <td class="address">7393 Ash Pl, San Diego, CA 92076</td>
-          <td class="legal">Lot 13 Block 1 Mechanic Lien – Multiple Liens Recorded</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0789439</td><td>12/10/2025</td>
+          <td class="name">Wilson, David</td><td class="name">Johnson, Robert</td>
+          <td class="address">663 Elm Dr, San Antonio, TX 78243</td>
+          <td class="legal">Lot 52 Block 3 Mechanic Lien Multiple Liens Recorded</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#18</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              15
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0989078</td>
-          <td>10/20/2024</td>
-          <td class="name">Williams, Michael</td>
-          <td class="name">Davis, Jessica</td>
-          <td class="address">5045 Ash Pl, San Diego, CA 92091</td>
-          <td class="legal">Lot 10 Block 11 Mechanic Lien – Multiple Liens Recorded</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0462986</td><td>12/01/2023</td>
+          <td class="name">Anderson, Michael</td><td class="name">Brown, William</td>
+          <td class="address">6809 Cedar Blvd, San Antonio, TX 78250</td>
+          <td class="legal">Lot 60 Block 16 Mechanic Lien Multiple Liens Recorded</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#19</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              15
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0675777</td>
-          <td>06/05/2023</td>
-          <td class="name">Garcia, Richard</td>
-          <td class="name">Taylor, Robert</td>
-          <td class="address">904 Pine Rd, San Diego, CA 92096</td>
-          <td class="legal">Lot 54 Block 3 Mechanic Lien – Multiple Liens Recorded</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0350015</td><td>04/19/2025</td>
+          <td class="name">Miller, Barbara</td><td class="name">Jones, David</td>
+          <td class="address">2661 Walnut Ln, San Antonio, TX 78255</td>
+          <td class="legal">Lot 66 Block 7 Mechanic Lien Multiple Liens Recorded</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#20</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0644279</td>
-          <td>03/20/2025</td>
-          <td class="name">Martin, Jessica</td>
-          <td class="name">Jackson, William</td>
-          <td class="address">2123 Maple Ave, San Diego, CA 92136</td>
-          <td class="legal">Lot 90 Dissolution of Marriage – Quitclaim</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0905957</td><td>01/14/2025</td>
+          <td class="name">Williams, Linda</td><td class="name">Anderson, Maria</td>
+          <td class="address">6896 Maple Ave, San Antonio, TX 78226</td>
+          <td class="legal">Lot 42 Block 19 Mechanic Lien Multiple Liens Recorded</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#21</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0356956</td>
-          <td>07/21/2024</td>
-          <td class="name">Davis, Robert</td>
-          <td class="name">Martin, Richard</td>
-          <td class="address">1306 Ash Pl, San Diego, CA 91904</td>
-          <td class="legal">Lot 44 Dissolution of Marriage – Quitclaim</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0540033</td><td>12/09/2024</td>
+          <td class="name">Williams, Barbara</td><td class="name">Davis, Barbara</td>
+          <td class="address">8548 Elm Dr, San Antonio, TX 78274</td>
+          <td class="legal">Lot 85 Block 18 Mechanic Lien Multiple Liens Recorded</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#22</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0721598</td>
-          <td>06/06/2024</td>
-          <td class="name">Thomas, Maria</td>
-          <td class="name">Davis, James</td>
-          <td class="address">3164 Cedar Blvd, San Diego, CA 92144</td>
-          <td class="legal">Chapter 7 Bankruptcy – Trustee Deed to Thomas, Maria</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0221998</td><td>02/04/2025</td>
+          <td class="name">Smith, Patricia</td><td class="name">Brown, Robert</td>
+          <td class="address">6553 Maple Ave, San Antonio, TX 78228</td>
+          <td class="legal">Notice of Default Lis Pendens filed</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#23</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0520534</td>
-          <td>05/19/2024</td>
-          <td class="name">Harris, Maria</td>
-          <td class="name">White, Linda</td>
-          <td class="address">4348 Oak St, San Diego, CA 92167</td>
-          <td class="legal">Lot 16 Dissolution of Marriage – Quitclaim</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0564072</td><td>02/11/2025</td>
+          <td class="name">Wilson, Patricia</td><td class="name">Anderson, David</td>
+          <td class="address">5164 Elm Dr, San Antonio, TX 78267</td>
+          <td class="legal">Lot 6 Block 3 Mechanic Lien Multiple Liens Recorded</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#24</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0289062</td>
-          <td>10/27/2025</td>
-          <td class="name">White, Susan</td>
-          <td class="name">Smith, Thomas</td>
-          <td class="address">2297 Hickory Rd, San Diego, CA 92180</td>
-          <td class="legal">Chapter 7 Bankruptcy – Trustee Deed to White, Susan</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0713972</td><td>01/16/2024</td>
+          <td class="name">Miller, Barbara</td><td class="name">Garcia, Michael</td>
+          <td class="address">6315 Birch Ct, San Antonio, TX 78252</td>
+          <td class="legal">Lot 69 Dissolution of Marriage Quitclaim Deed</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#25</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0522185</td>
-          <td>11/25/2024</td>
-          <td class="name">Williams, Patricia</td>
-          <td class="name">Smith, Richard</td>
-          <td class="address">4724 Spruce Way, San Diego, CA 92066</td>
-          <td class="legal">Lot 39 Dissolution of Marriage – Quitclaim</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0253687</td><td>06/07/2023</td>
+          <td class="name">Jones, James</td><td class="name">Wilson, William</td>
+          <td class="address">4363 Maple Ave, San Antonio, TX 78258</td>
+          <td class="legal">Lot 19 Dissolution of Marriage Quitclaim Deed</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#26</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0609111</td>
-          <td>03/03/2024</td>
-          <td class="name">Miller, Maria</td>
-          <td class="name">Davis, Maria</td>
-          <td class="address">6257 Spruce Way, San Diego, CA 91935</td>
-          <td class="legal">Lot 83 Dissolution of Marriage – Quitclaim</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0890065</td><td>03/24/2023</td>
+          <td class="name">Brown, Maria</td><td class="name">Miller, David</td>
+          <td class="address">1056 Cedar Blvd, San Antonio, TX 78295</td>
+          <td class="legal">Lot 43 Dissolution of Marriage Quitclaim Deed</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#27</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0186182</td>
-          <td>04/02/2024</td>
-          <td class="name">Harris, Robert</td>
-          <td class="name">Brown, Joseph</td>
-          <td class="address">1452 Oak St, San Diego, CA 92148</td>
-          <td class="legal">Lot 63 Dissolution of Marriage – Quitclaim</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0916433</td><td>02/14/2023</td>
+          <td class="name">Brown, Barbara</td><td class="name">Anderson, Maria</td>
+          <td class="address">3878 Cedar Blvd, San Antonio, TX 78220</td>
+          <td class="legal">Lot 25 Dissolution of Marriage Quitclaim Deed</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#28</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0262808</td>
-          <td>01/13/2025</td>
-          <td class="name">Harris, Joseph</td>
-          <td class="name">White, Karen</td>
-          <td class="address">3470 Oak St, San Diego, CA 92177</td>
-          <td class="legal">Chapter 7 Bankruptcy – Trustee Deed to Harris, Joseph</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0490255</td><td>04/26/2023</td>
+          <td class="name">Williams, James</td><td class="name">Brown, James</td>
+          <td class="address">6138 Birch Ct, San Antonio, TX 78207</td>
+          <td class="legal">Chapter 7 Bankruptcy Trustee Deed</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#29</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0549917</td>
-          <td>12/07/2025</td>
-          <td class="name">Johnson, Jessica</td>
-          <td class="name">Jones, Robert</td>
-          <td class="address">7904 Pine Rd, San Diego, CA 92049</td>
-          <td class="legal">Chapter 7 Bankruptcy – Trustee Deed to Johnson, Jessica</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0863633</td><td>08/22/2024</td>
+          <td class="name">Miller, Barbara</td><td class="name">Williams, Elizabeth</td>
+          <td class="address">7818 Spruce Way, San Antonio, TX 78298</td>
+          <td class="legal">Lot 86 Standard Residential Conveyance</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#30</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0558906</td>
-          <td>12/08/2024</td>
-          <td class="name">Wilson, Patricia</td>
-          <td class="name">Smith, James</td>
-          <td class="address">3387 Walnut Ln, San Diego, CA 91920</td>
-          <td class="legal">Chapter 7 Bankruptcy – Trustee Deed to Wilson, Patricia</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0781871</td><td>02/28/2024</td>
+          <td class="name">Brown, Robert</td><td class="name">Jones, Michael</td>
+          <td class="address">6322 Elm Dr, San Antonio, TX 78250</td>
+          <td class="legal">Lot 41 Standard Residential Conveyance</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#31</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              10
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0953866</td>
-          <td>07/07/2024</td>
-          <td class="name">Taylor, Richard</td>
-          <td class="name">White, Robert</td>
-          <td class="address">9571 Spruce Way, San Diego, CA 92158</td>
-          <td class="legal">Lot 49 Dissolution of Marriage – Quitclaim</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0119380</td><td>08/04/2023</td>
+          <td class="name">Jones, David</td><td class="name">Garcia, Barbara</td>
+          <td class="address">4295 Spruce Way, San Antonio, TX 78262</td>
+          <td class="legal">Lot 68 Standard Residential Conveyance</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#32</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              0
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0181965</td>
-          <td>01/12/2024</td>
-          <td class="name">Williams, Richard</td>
-          <td class="name">Johnson, Linda</td>
-          <td class="address">9783 Walnut Ln, San Diego, CA 92162</td>
-          <td class="legal">Lot 81 Standard Residential Conveyance</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0727263</td><td>02/16/2024</td>
+          <td class="name">Garcia, Michael</td><td class="name">Anderson, Elizabeth</td>
+          <td class="address">1664 Spruce Way, San Antonio, TX 78273</td>
+          <td class="legal">Lot 17 Standard Residential Conveyance</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#33</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              0
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0387375</td>
-          <td>01/03/2024</td>
-          <td class="name">Thomas, Robert</td>
-          <td class="name">Davis, Jessica</td>
-          <td class="address">1098 Oak St, San Diego, CA 92177</td>
-          <td class="legal">Lot 55 Standard Residential Conveyance</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0596098</td><td>04/20/2024</td>
+          <td class="name">Jones, Linda</td><td class="name">Miller, Linda</td>
+          <td class="address">5155 Pine Rd, San Antonio, TX 78236</td>
+          <td class="legal">Lot 93 Standard Residential Conveyance</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#34</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              0
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0736014</td>
-          <td>03/15/2025</td>
-          <td class="name">Smith, Linda</td>
-          <td class="name">Thomas, Karen</td>
-          <td class="address">5826 Cedar Blvd, San Diego, CA 91956</td>
-          <td class="legal">Lot 70 Standard Residential Conveyance</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-        <tr class="record-row ">
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0644646</td><td>02/16/2025</td>
+          <td class="name">Garcia, Maria</td><td class="name">Johnson, Patricia</td>
+          <td class="address">7878 Walnut Ln, San Antonio, TX 78206</td>
+          <td class="legal">Lot 25 Standard Residential Conveyance</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#35</td>
-          <td>
-            <div class="score-circle" style="--c:#22c55e">
-              0
-            </div>
-            <div class="score-label" style="color:#22c55e">
-              ✓ COLD
-            </div>
-          </td>
-          <td class="doc-num">2024-0327876</td>
-          <td>07/12/2025</td>
-          <td class="name">Brown, Susan</td>
-          <td class="name">Martin, Maria</td>
-          <td class="address">2268 Hickory Rd, San Diego, CA 91960</td>
-          <td class="legal">Lot 39 Standard Residential Conveyance</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Delinquent</span><span class="badge badge-inactive">Code Violation</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td>
-        </tr>
-    </tbody>
-  </table>
-</div>
-
-<footer>
-  San Diego County Public Records &nbsp;·&nbsp; Data sourced from https://YOUR_COUNTY_placeholder
-  &nbsp;·&nbsp; Refresh to reload &nbsp;·&nbsp; For informational use only
-</footer>
-
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">2024-0444381</td><td>12/11/2025</td>
+          <td class="name">Smith, Linda</td><td class="name">Garcia, Robert</td>
+          <td class="address">9160 Oak St, San Antonio, TX 78274</td>
+          <td class="legal">Lot 67 Standard Residential Conveyance</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr></tbody>
+</table></div>
+<footer>Bexar County, TX Public Records - For informational use only</footer>
 <script>
-  let currentFilter = 'all';
-
-  function filterRows(type, btn) {
-    currentFilter = type;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    applyFilters(document.querySelector('.search-box').value);
-  }
-
-  function searchRows(query) {
-    applyFilters(query);
-  }
-
-  function applyFilters(query) {
-    const q = query.toLowerCase().trim();
-    document.querySelectorAll('#tableBody .record-row').forEach(row => {
-      const score = parseInt(row.querySelector('.score-circle').textContent);
-      const text  = row.textContent.toLowerCase();
-
-      const matchFilter =
-        currentFilter === 'all'  ? true :
-        currentFilter === 'hot'  ? score >= 50 :
-        currentFilter === 'warm' ? (score >= 25 && score < 50) :
-        currentFilter === 'cold' ? score < 25 : true;
-
-      const matchSearch = q === '' || text.includes(q);
-
-      row.classList.toggle('hidden', !(matchFilter && matchSearch));
-    });
-  }
-</script>
-</body>
-</html>
+let cf='all';
+function filterRows(t,b){cf=t;document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');applyFilters(document.querySelector('.search-box').value);}
+function searchRows(q){applyFilters(q);}
+function applyFilters(query){const q=query.toLowerCase();document.querySelectorAll('#tableBody tr').forEach(row=>{const s=parseInt(row.querySelector('.score-circle')?.textContent||0);const t=row.textContent.toLowerCase();const mf=cf==='all'||((cf==='hot'&&s>=50)||(cf==='warm'&&s>=25&&s<50)||(cf==='cold'&&s<25));row.classList.toggle('hidden',!(mf&&(q===''||t.includes(q))));}); }
+</script></body></html>
