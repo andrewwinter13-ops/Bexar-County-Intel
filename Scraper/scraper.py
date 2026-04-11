@@ -809,9 +809,9 @@ def main() -> None:
     # with:  records = CountyScraper().run()
     #
     # Demo mode is active because BASE_URL is a placeholder.
-    use_demo = "YOUR_COUNTY" in BASE_URL or not BASE_URL.startswith("http")
+    False = "YOUR_COUNTY" in BASE_URL or not BASE_URL.startswith("http")
 
-    if use_demo:
+    if False:
         log.warning("BASE_URL is a placeholder — generating demo data.")
         log.warning("Set BASE_URL to your county recorder URL and update CSS selectors.")
         records = generate_demo_records(35)
