@@ -7,7 +7,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;}
 header{background:linear-gradient(135deg,#0f1117,#13161f);border-bottom:1px solid var(--border);padding:2rem 2.5rem;}
-.header-inner{max-width:1600px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;flex-wrap:wrap;}
+.header-inner{max-width:1800px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;flex-wrap:wrap;}
 .eyebrow{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;}
 h1{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,#e2e8f0 30%,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .subtitle{font-size:13px;color:var(--muted);margin-top:.25rem;font-family:'DM Mono',monospace;}
@@ -16,33 +16,41 @@ h1{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;background:lin
 .stat-card .num{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;line-height:1;}
 .stat-card .lbl{font-size:11px;color:var(--muted);margin-top:.25rem;text-transform:uppercase;letter-spacing:.1em;}
 .num-hot{color:#ef4444;}.num-warm{color:#f97316;}.num-cold{color:#22c55e;}.num-total{color:var(--accent);}.num-avg{color:#94a3b8;}
-.filter-bar{max-width:1600px;margin:1.5rem auto 0;padding:0 2.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+.filter-bar{max-width:1800px;margin:1.5rem auto 0;padding:0 2.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
 .filter-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;padding:.5rem 1rem;transition:all .15s;}
 .filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--text);background:rgba(99,102,241,.1);}
 .search-box{margin-left:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:.5rem 1rem;width:220px;outline:none;}
 .search-box:focus{border-color:var(--accent);}.search-box::placeholder{color:var(--muted);}
-.table-wrap{max-width:1600px;margin:1.5rem auto 3rem;padding:0 2.5rem;overflow-x:auto;}
+.table-wrap{max-width:1800px;margin:1.5rem auto 3rem;padding:0 2.5rem;overflow-x:auto;}
 table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
 thead th{background:var(--surface);border-bottom:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;padding:.9rem 1rem;text-align:left;text-transform:uppercase;white-space:nowrap;}
 tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
 tbody tr:hover{background:rgba(255,255,255,.03);}.hot-row{background:rgba(239,68,68,.05);}.hidden{display:none;}
-td{padding:.85rem 1rem;vertical-align:middle;}
+td{padding:.75rem 1rem;vertical-align:middle;}
 .rank{color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;text-align:center;}
 .score-circle{width:44px;height:44px;border-radius:50%;border:2px solid var(--c,#22c55e);color:var(--c,#22c55e);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin:0 auto 4px;}
 .score-label{text-align:center;font-size:10px;font-family:'DM Mono',monospace;}
-.doc-num{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);}.name{font-weight:500;white-space:nowrap;}.address{color:#94a3b8;font-size:13px;max-width:180px;}.legal{color:var(--muted);font-size:12px;max-width:220px;line-height:1.4;}.flags{min-width:220px;}
+.doc-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.doc-type{font-size:12px;font-weight:500;white-space:nowrap;}
+.name{font-weight:500;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;}
+.address{color:#94a3b8;font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.flags{min-width:200px;}
 .badge{border-radius:5px;display:inline-block;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;margin:2px 2px 2px 0;padding:2px 7px;white-space:nowrap;}
 .badge-active{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);}.badge-inactive{background:rgba(255,255,255,.04);color:#334155;border:1px solid transparent;}
 footer{border-top:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;padding:1.25rem;text-align:center;}
 </style></head><body>
 <header><div class="header-inner">
-  <div><div class="eyebrow">Motivated Seller Intelligence</div><h1>Bexar County, TX Lead Dashboard</h1><div class="subtitle">Generated April 11, 2026 at 04:52 UTC &nbsp; 35 records</div></div>
+  <div>
+    <div class="eyebrow">Motivated Seller Intelligence</div>
+    <h1>Bexar County, TX Lead Dashboard</h1>
+    <div class="subtitle">Generated April 11, 2026 at 05:14 UTC &nbsp;·&nbsp; 50 records &nbsp;·&nbsp; Source: bexar.tx.publicsearch.us</div>
+  </div>
   <div class="stats">
     <div class="stat-card"><div class="num num-hot">0</div><div class="lbl">Hot</div></div>
-    <div class="stat-card"><div class="num num-warm">8</div><div class="lbl">Warm</div></div>
-    <div class="stat-card"><div class="num num-cold">27</div><div class="lbl">Cold</div></div>
-    <div class="stat-card"><div class="num num-total">35</div><div class="lbl">Total</div></div>
-    <div class="stat-card"><div class="num num-avg">14.1</div><div class="lbl">Avg Score</div></div>
+    <div class="stat-card"><div class="num num-warm">11</div><div class="lbl">Warm</div></div>
+    <div class="stat-card"><div class="num num-cold">39</div><div class="lbl">Cold</div></div>
+    <div class="stat-card"><div class="num num-total">50</div><div class="lbl">Total</div></div>
+    <div class="stat-card"><div class="num num-avg">16.4</div><div class="lbl">Avg Score</div></div>
   </div>
 </div></header>
 <div class="filter-bar">
@@ -50,293 +58,516 @@ footer{border-top:1px solid var(--border);color:var(--muted);font-family:'DM Mon
   <button class="filter-btn" onclick="filterRows('hot',this)">Hot (50+)</button>
   <button class="filter-btn" onclick="filterRows('warm',this)">Warm (25-49)</button>
   <button class="filter-btn" onclick="filterRows('cold',this)">Cold (&lt;25)</button>
-  <input class="search-box" type="text" placeholder="Search name, address..." oninput="searchRows(this.value)">
+  <input class="search-box" type="text" placeholder="Search name, doc type..." oninput="searchRows(this.value)">
 </div>
 <div class="table-wrap"><table>
-  <thead><tr><th>#</th><th>Score</th><th>Doc #</th><th>Date</th><th>Grantor (Seller)</th><th>Grantee (Buyer)</th><th>Address</th><th>Legal</th><th>Signals</th></tr></thead>
+  <thead><tr>
+    <th>#</th><th>Score</th><th>Doc #</th><th>Date</th><th>Doc Type</th>
+    <th>Grantor (Seller)</th><th>Grantee (Buyer)</th><th>Address / Legal</th><th>Signals</th>
+  </tr></thead>
   <tbody id="tableBody"><tr class="record-row ">
           <td class="rank">#1</td>
-          <td><div class="score-circle" style="--c:#f97316">30</div>
+          <td><div class="score-circle" style="--c:#f97316">40</div>
           <div class="score-label" style="color:#f97316">WARM</div></td>
-          <td class="doc-num">2024-0720638</td><td>09/28/2025</td>
-          <td class="name">Smith, Michael</td><td class="name">Johnson, William</td>
-          <td class="address">3207 Pine Rd, San Antonio, TX 78254</td>
-          <td class="legal">Lot 58 Block 4 Tax Lien filed per Revenue Code</td>
-          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202492719461</td>
+          <td style="white-space:nowrap;font-size:12px">6/5/2024</td>
+          <td class="doc-type">RELEASE OF FTL</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="name">MARTINEZ WILLIAM</td>
+          <td class="address">8587 Mission Hills, San Antonio TX 78291</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#2</td>
-          <td><div class="score-circle" style="--c:#f97316">30</div>
+          <td><div class="score-circle" style="--c:#f97316">40</div>
           <div class="score-label" style="color:#f97316">WARM</div></td>
-          <td class="doc-num">2024-0619805</td><td>06/11/2025</td>
-          <td class="name">Johnson, Patricia</td><td class="name">Davis, Linda</td>
-          <td class="address">3922 Walnut Ln, San Antonio, TX 78291</td>
-          <td class="legal">Lot 19 Block 6 Tax Lien filed per Revenue Code</td>
-          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202413977543</td>
+          <td style="white-space:nowrap;font-size:12px">1/21/2025</td>
+          <td class="doc-type">RELEASE OF FTL</td>
+          <td class="name">RODRIGUEZ MICHAEL</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="address">7944 Mission Hills, San Antonio TX 78214</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#3</td>
-          <td><div class="score-circle" style="--c:#f97316">30</div>
+          <td><div class="score-circle" style="--c:#f97316">40</div>
           <div class="score-label" style="color:#f97316">WARM</div></td>
-          <td class="doc-num">2024-0912331</td><td>11/13/2023</td>
-          <td class="name">Garcia, Linda</td><td class="name">Garcia, James</td>
-          <td class="address">6564 Walnut Ln, San Antonio, TX 78204</td>
-          <td class="legal">Lot 33 Block 16 Tax Lien filed per Revenue Code</td>
-          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202412629722</td>
+          <td style="white-space:nowrap;font-size:12px">4/18/2025</td>
+          <td class="doc-type">RELEASE OF FTL</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="name">MILLER LINDA</td>
+          <td class="address">7555 Stone Oak, San Antonio TX 78251</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#4</td>
+          <td><div class="score-circle" style="--c:#f97316">40</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">202428866860</td>
+          <td style="white-space:nowrap;font-size:12px">4/11/2025</td>
+          <td class="doc-type">RELEASE OF FTL</td>
+          <td class="name">PACIFIC RRLF FUND...</td>
+          <td class="name">JOHNSON THOMAS</td>
+          <td class="address">6303 River Walk, San Antonio TX 78290</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#5</td>
+          <td><div class="score-circle" style="--c:#f97316">40</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">202416739329</td>
+          <td style="white-space:nowrap;font-size:12px">4/13/2025</td>
+          <td class="doc-type">RELEASE OF FTL</td>
+          <td class="name">RCN CAPITAL LLC</td>
+          <td class="name">MILLER PATRICIA</td>
+          <td class="address">9672 Cedar Hills, San Antonio TX 78248</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#6</td>
           <td><div class="score-circle" style="--c:#f97316">30</div>
           <div class="score-label" style="color:#f97316">WARM</div></td>
-          <td class="doc-num">2024-0284884</td><td>08/19/2025</td>
-          <td class="name">Anderson, David</td><td class="name">Garcia, Michael</td>
-          <td class="address">1630 Elm Dr, San Antonio, TX 78253</td>
-          <td class="legal">Lot 7 Block 3 Tax Lien filed per Revenue Code</td>
+          <td class="doc-num">202457331706</td>
+          <td style="white-space:nowrap;font-size:12px">6/7/2024</td>
+          <td class="doc-type">STATE TAX LIEN</td>
+          <td class="name">DHI MORTGAGE COM...</td>
+          <td class="name">RCN CAPITAL LLC</td>
+          <td class="address">338 Cedar Hills, San Antonio TX 78271</td>
           <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
-          <td class="rank">#5</td>
-          <td><div class="score-circle" style="--c:#f97316">25</div>
-          <div class="score-label" style="color:#f97316">WARM</div></td>
-          <td class="doc-num">2024-0765917</td><td>11/24/2025</td>
-          <td class="name">Davis, Barbara</td><td class="name">Williams, Michael</td>
-          <td class="address">7101 Spruce Way, San Antonio, TX 78260</td>
-          <td class="legal">Parcel 23519 Notice of Code Violation Abatement Order</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-active">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
-          <td class="rank">#6</td>
-          <td><div class="score-circle" style="--c:#f97316">25</div>
-          <div class="score-label" style="color:#f97316">WARM</div></td>
-          <td class="doc-num">2024-0776486</td><td>11/28/2023</td>
-          <td class="name">Miller, Patricia</td><td class="name">Smith, David</td>
-          <td class="address">8728 Maple Ave, San Antonio, TX 78272</td>
-          <td class="legal">Parcel 78500 Notice of Code Violation Abatement Order</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-active">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#7</td>
-          <td><div class="score-circle" style="--c:#f97316">25</div>
+          <td><div class="score-circle" style="--c:#f97316">30</div>
           <div class="score-label" style="color:#f97316">WARM</div></td>
-          <td class="doc-num">2024-0542563</td><td>06/22/2025</td>
-          <td class="name">Williams, William</td><td class="name">Williams, Robert</td>
-          <td class="address">5963 Birch Ct, San Antonio, TX 78268</td>
-          <td class="legal">Parcel 85593 Notice of Code Violation Abatement Order</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-active">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202440713266</td>
+          <td style="white-space:nowrap;font-size:12px">3/7/2025</td>
+          <td class="doc-type">FEDERAL TAX LIEN</td>
+          <td class="name">INDEPENDENT BANK</td>
+          <td class="name">INTERNAL REVENUE...</td>
+          <td class="address">7345 Oak Meadow, San Antonio TX 78245</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#8</td>
-          <td><div class="score-circle" style="--c:#f97316">25</div>
+          <td><div class="score-circle" style="--c:#f97316">30</div>
           <div class="score-label" style="color:#f97316">WARM</div></td>
-          <td class="doc-num">2024-0887623</td><td>03/13/2025</td>
-          <td class="name">Brown, Elizabeth</td><td class="name">Brown, James</td>
-          <td class="address">9763 Oak St, San Antonio, TX 78238</td>
-          <td class="legal">Parcel 41711 Notice of Code Violation Abatement Order</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-active">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202472550358</td>
+          <td style="white-space:nowrap;font-size:12px">2/4/2024</td>
+          <td class="doc-type">FEDERAL TAX LIEN</td>
+          <td class="name">GONZALEZ DAVID</td>
+          <td class="name">GONZALEZ DAVID</td>
+          <td class="address">7498 Rocky Point, San Antonio TX 78226</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#9</td>
-          <td><div class="score-circle" style="--c:#22c55e">20</div>
-          <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0161045</td><td>11/16/2025</td>
-          <td class="name">Garcia, Maria</td><td class="name">Davis, Robert</td>
-          <td class="address">9609 Birch Ct, San Antonio, TX 78268</td>
-          <td class="legal">Lot 72 Block 18 Probate Letters Testamentary Issued</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">30</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">202488799060</td>
+          <td style="white-space:nowrap;font-size:12px">7/8/2025</td>
+          <td class="doc-type">FEDERAL TAX LIEN</td>
+          <td class="name">LOPEZ JOSE</td>
+          <td class="name">GOODLEAP LLC</td>
+          <td class="address">6511 Alamo Heights, San Antonio TX 78273</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#10</td>
-          <td><div class="score-circle" style="--c:#22c55e">20</div>
-          <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0197663</td><td>02/09/2025</td>
-          <td class="name">Wilson, Robert</td><td class="name">Wilson, Maria</td>
-          <td class="address">7783 Walnut Ln, San Antonio, TX 78286</td>
-          <td class="legal">Lot 54 Block 1 Probate Letters Testamentary Issued</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">30</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">202494164394</td>
+          <td style="white-space:nowrap;font-size:12px">3/14/2025</td>
+          <td class="doc-type">FEDERAL TAX LIEN</td>
+          <td class="name">RCN CAPITAL LLC</td>
+          <td class="name">BROWN ELIZABETH</td>
+          <td class="address">235 Elm Crest, San Antonio TX 78251</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#11</td>
-          <td><div class="score-circle" style="--c:#22c55e">20</div>
-          <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0366536</td><td>04/04/2024</td>
-          <td class="name">Johnson, David</td><td class="name">Johnson, Elizabeth</td>
-          <td class="address">3407 Spruce Way, San Antonio, TX 78234</td>
-          <td class="legal">Lot 43 Block 16 Probate Letters Testamentary Issued</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td><div class="score-circle" style="--c:#f97316">30</div>
+          <div class="score-label" style="color:#f97316">WARM</div></td>
+          <td class="doc-num">202455336887</td>
+          <td style="white-space:nowrap;font-size:12px">10/15/2024</td>
+          <td class="doc-type">STATE TAX LIEN</td>
+          <td class="name">PACIFIC RRLF FUND...</td>
+          <td class="name">GOODLEAP LLC</td>
+          <td class="address">7201 Oak Meadow, San Antonio TX 78276</td>
+          <td class="flags"><span class="badge badge-active">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#12</td>
           <td><div class="score-circle" style="--c:#22c55e">20</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0862164</td><td>12/03/2023</td>
-          <td class="name">Miller, Linda</td><td class="name">Williams, James</td>
-          <td class="address">9491 Spruce Way, San Antonio, TX 78275</td>
-          <td class="legal">Lot 81 Block 8 Probate Letters Testamentary Issued</td>
+          <td class="doc-num">202482710019</td>
+          <td style="white-space:nowrap;font-size:12px">8/17/2025</td>
+          <td class="doc-type">AFFIDAVIT</td>
+          <td class="name">PEREZ THOMAS</td>
+          <td class="name">PACIFIC RRLF FUND...</td>
+          <td class="address">9071 Rocky Point, San Antonio TX 78249</td>
           <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#13</td>
-          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <td><div class="score-circle" style="--c:#22c55e">20</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0434508</td><td>11/02/2023</td>
-          <td class="name">Smith, William</td><td class="name">Miller, Michael</td>
-          <td class="address">1292 Cedar Blvd, San Antonio, TX 78229</td>
-          <td class="legal">Notice of Default Lis Pendens filed</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202481573878</td>
+          <td style="white-space:nowrap;font-size:12px">3/8/2024</td>
+          <td class="doc-type">AFFIDAVIT</td>
+          <td class="name">LOPEZ SUSAN</td>
+          <td class="name">WILLIAMS THOMAS</td>
+          <td class="address">3022 Alamo Heights, San Antonio TX 78292</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#14</td>
-          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <td><div class="score-circle" style="--c:#22c55e">20</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0777590</td><td>03/03/2025</td>
-          <td class="name">Smith, Michael</td><td class="name">Smith, Linda</td>
-          <td class="address">9939 Pine Rd, San Antonio, TX 78254</td>
-          <td class="legal">Lot 78 Block 3 Mechanic Lien Multiple Liens Recorded</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202415395276</td>
+          <td style="white-space:nowrap;font-size:12px">11/26/2024</td>
+          <td class="doc-type">AFFIDAVIT</td>
+          <td class="name">DAVIS SUSAN</td>
+          <td class="name">DHI MORTGAGE COM...</td>
+          <td class="address">848 Stone Oak, San Antonio TX 78278</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#15</td>
-          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <td><div class="score-circle" style="--c:#22c55e">20</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0578514</td><td>11/14/2024</td>
-          <td class="name">Davis, Michael</td><td class="name">Williams, William</td>
-          <td class="address">2335 Walnut Ln, San Antonio, TX 78277</td>
-          <td class="legal">Lot 31 Block 1 Mechanic Lien Multiple Liens Recorded</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202411287800</td>
+          <td style="white-space:nowrap;font-size:12px">6/22/2025</td>
+          <td class="doc-type">AFFIDAVIT</td>
+          <td class="name">PEREZ ROBERT</td>
+          <td class="name">MILLER WILLIAM</td>
+          <td class="address">7585 Cedar Hills, San Antonio TX 78291</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#16</td>
-          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <td><div class="score-circle" style="--c:#22c55e">20</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0699546</td><td>07/05/2023</td>
-          <td class="name">Jones, Michael</td><td class="name">Brown, Elizabeth</td>
-          <td class="address">6816 Elm Dr, San Antonio, TX 78278</td>
-          <td class="legal">Lot 89 Block 15 Mechanic Lien Multiple Liens Recorded</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202420416533</td>
+          <td style="white-space:nowrap;font-size:12px">4/9/2025</td>
+          <td class="doc-type">AFFIDAVIT</td>
+          <td class="name">RCN CAPITAL LLC</td>
+          <td class="name">GARCIA THOMAS</td>
+          <td class="address">5730 Pine Valley, San Antonio TX 78220</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#17</td>
-          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <td><div class="score-circle" style="--c:#22c55e">20</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0259872</td><td>01/22/2025</td>
-          <td class="name">Williams, Patricia</td><td class="name">Williams, Linda</td>
-          <td class="address">782 Cedar Blvd, San Antonio, TX 78286</td>
-          <td class="legal">Notice of Default Lis Pendens filed</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202428919882</td>
+          <td style="white-space:nowrap;font-size:12px">5/17/2024</td>
+          <td class="doc-type">AFFIDAVIT</td>
+          <td class="name">RODRIGUEZ THOMAS</td>
+          <td class="name">GARCIA SUSAN</td>
+          <td class="address">5640 River Walk, San Antonio TX 78261</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-active">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#18</td>
           <td><div class="score-circle" style="--c:#22c55e">15</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0536617</td><td>07/07/2023</td>
-          <td class="name">Jones, Patricia</td><td class="name">Williams, Elizabeth</td>
-          <td class="address">6100 Birch Ct, San Antonio, TX 78226</td>
-          <td class="legal">Lot 66 Block 16 Mechanic Lien Multiple Liens Recorded</td>
+          <td class="doc-num">202428318604</td>
+          <td style="white-space:nowrap;font-size:12px">3/9/2024</td>
+          <td class="doc-type">UCC 1 REAL PROPERTY</td>
+          <td class="name">INDEPENDENT BANK</td>
+          <td class="name">WILLIAMS DAVID</td>
+          <td class="address">1010 Pine Valley, San Antonio TX 78247</td>
           <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#19</td>
           <td><div class="score-circle" style="--c:#22c55e">15</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0200898</td><td>12/08/2025</td>
-          <td class="name">Garcia, David</td><td class="name">Jones, William</td>
-          <td class="address">8861 Oak St, San Antonio, TX 78219</td>
-          <td class="legal">Notice of Default Lis Pendens filed</td>
+          <td class="doc-num">202413670983</td>
+          <td style="white-space:nowrap;font-size:12px">12/28/2025</td>
+          <td class="doc-type">ASSIGNMENT</td>
+          <td class="name">DAVIS MARIA</td>
+          <td class="name">RODRIGUEZ MARIA</td>
+          <td class="address">6728 Stone Oak, San Antonio TX 78285</td>
           <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#20</td>
-          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0243550</td><td>12/17/2024</td>
-          <td class="name">Smith, Barbara</td><td class="name">Smith, Barbara</td>
-          <td class="address">7188 Cedar Blvd, San Antonio, TX 78237</td>
-          <td class="legal">Lot 70 Dissolution of Marriage Quitclaim Deed</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202431817587</td>
+          <td style="white-space:nowrap;font-size:12px">12/6/2024</td>
+          <td class="doc-type">ASSIGNMENT</td>
+          <td class="name">GOODLEAP LLC</td>
+          <td class="name">GOODLEAP LLC</td>
+          <td class="address">3516 Sunset Ridge, San Antonio TX 78242</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#21</td>
-          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0106906</td><td>01/21/2025</td>
-          <td class="name">Wilson, Patricia</td><td class="name">Brown, William</td>
-          <td class="address">724 Maple Ave, San Antonio, TX 78222</td>
-          <td class="legal">Chapter 7 Bankruptcy Trustee Deed</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202457446346</td>
+          <td style="white-space:nowrap;font-size:12px">7/6/2025</td>
+          <td class="doc-type">UCC 1 REAL PROPERTY</td>
+          <td class="name">JOHNSON ROBERT</td>
+          <td class="name">GOODLEAP LLC</td>
+          <td class="address">4198 Cedar Hills, San Antonio TX 78218</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#22</td>
-          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0535768</td><td>10/07/2024</td>
-          <td class="name">Davis, Barbara</td><td class="name">Miller, Elizabeth</td>
-          <td class="address">2783 Cedar Blvd, San Antonio, TX 78227</td>
-          <td class="legal">Lot 40 Dissolution of Marriage Quitclaim Deed</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202413936086</td>
+          <td style="white-space:nowrap;font-size:12px">4/23/2025</td>
+          <td class="doc-type">ASSIGNMENT</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="name">HERNANDEZ SUSAN</td>
+          <td class="address">635 Rocky Point, San Antonio TX 78231</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#23</td>
-          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0341904</td><td>02/26/2023</td>
-          <td class="name">Williams, Michael</td><td class="name">Smith, Barbara</td>
-          <td class="address">5449 Cedar Blvd, San Antonio, TX 78263</td>
-          <td class="legal">Chapter 7 Bankruptcy Trustee Deed</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202448673987</td>
+          <td style="white-space:nowrap;font-size:12px">8/13/2024</td>
+          <td class="doc-type">UCC 1 REAL PROPERTY</td>
+          <td class="name">INDEPENDENT BANK</td>
+          <td class="name">RCN CAPITAL LLC</td>
+          <td class="address">7267 Cedar Hills, San Antonio TX 78217</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#24</td>
-          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0159347</td><td>11/08/2025</td>
-          <td class="name">Garcia, Michael</td><td class="name">Wilson, Linda</td>
-          <td class="address">4512 Oak St, San Antonio, TX 78245</td>
-          <td class="legal">Lot 89 Dissolution of Marriage Quitclaim Deed</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202447499874</td>
+          <td style="white-space:nowrap;font-size:12px">7/9/2025</td>
+          <td class="doc-type">ASSIGNMENT</td>
+          <td class="name">PACIFIC RRLF FUND...</td>
+          <td class="name">PEREZ MARIA</td>
+          <td class="address">7349 Oak Meadow, San Antonio TX 78242</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#25</td>
-          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0646656</td><td>10/07/2023</td>
-          <td class="name">Wilson, Barbara</td><td class="name">Garcia, Patricia</td>
-          <td class="address">2242 Spruce Way, San Antonio, TX 78292</td>
-          <td class="legal">Lot 63 Dissolution of Marriage Quitclaim Deed</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202449737771</td>
+          <td style="white-space:nowrap;font-size:12px">2/16/2025</td>
+          <td class="doc-type">ASSIGNMENT</td>
+          <td class="name">INTERNAL REVENUE...</td>
+          <td class="name">INDEPENDENT BANK</td>
+          <td class="address">5890 Mission Hills, San Antonio TX 78276</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#26</td>
-          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0118344</td><td>06/24/2024</td>
-          <td class="name">Miller, Barbara</td><td class="name">Wilson, Maria</td>
-          <td class="address">1810 Pine Rd, San Antonio, TX 78297</td>
-          <td class="legal">Lot 35 Dissolution of Marriage Quitclaim Deed</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202424304061</td>
+          <td style="white-space:nowrap;font-size:12px">9/28/2024</td>
+          <td class="doc-type">UCC 1 REAL PROPERTY</td>
+          <td class="name">INDEPENDENT BANK</td>
+          <td class="name">GOODLEAP LLC</td>
+          <td class="address">3999 Rocky Point, San Antonio TX 78283</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#27</td>
-          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0199906</td><td>01/13/2025</td>
-          <td class="name">Jones, Elizabeth</td><td class="name">Garcia, David</td>
-          <td class="address">1963 Birch Ct, San Antonio, TX 78230</td>
-          <td class="legal">Chapter 7 Bankruptcy Trustee Deed</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202428732993</td>
+          <td style="white-space:nowrap;font-size:12px">6/28/2025</td>
+          <td class="doc-type">ASSIGNMENT</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="name">INDEPENDENT BANK</td>
+          <td class="address">1145 Mission Hills, San Antonio TX 78292</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#28</td>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202485545688</td>
+          <td style="white-space:nowrap;font-size:12px">2/20/2024</td>
+          <td class="doc-type">ASSIGNMENT</td>
+          <td class="name">PACIFIC RRLF FUND...</td>
+          <td class="name">DAVIS ROBERT</td>
+          <td class="address">5312 Sunset Ridge, San Antonio TX 78257</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#29</td>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202475392053</td>
+          <td style="white-space:nowrap;font-size:12px">10/6/2024</td>
+          <td class="doc-type">UCC 1 REAL PROPERTY</td>
+          <td class="name">PACIFIC RRLF FUND...</td>
+          <td class="name">RCN CAPITAL LLC</td>
+          <td class="address">3114 Cedar Hills, San Antonio TX 78225</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#30</td>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202422176250</td>
+          <td style="white-space:nowrap;font-size:12px">3/20/2024</td>
+          <td class="doc-type">ASSIGNMENT</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="name">GARCIA PATRICIA</td>
+          <td class="address">3014 Stone Oak, San Antonio TX 78261</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#31</td>
+          <td><div class="score-circle" style="--c:#22c55e">15</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202422903497</td>
+          <td style="white-space:nowrap;font-size:12px">2/12/2025</td>
+          <td class="doc-type">UCC 1 REAL PROPERTY</td>
+          <td class="name">DHI MORTGAGE COM...</td>
+          <td class="name">WILLIAMS RICHARD</td>
+          <td class="address">2016 Stone Oak, San Antonio TX 78254</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-active">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#32</td>
           <td><div class="score-circle" style="--c:#22c55e">10</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0526130</td><td>09/08/2025</td>
-          <td class="name">Williams, Patricia</td><td class="name">Brown, William</td>
-          <td class="address">8054 Oak St, San Antonio, TX 78223</td>
-          <td class="legal">Chapter 7 Bankruptcy Trustee Deed</td>
+          <td class="doc-num">202430165499</td>
+          <td style="white-space:nowrap;font-size:12px">7/14/2025</td>
+          <td class="doc-type">CORRECTION</td>
+          <td class="name">WILLIAMS MICHAEL</td>
+          <td class="name">INDEPENDENT BANK</td>
+          <td class="address">5655 Sunset Ridge, San Antonio TX 78219</td>
           <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
-          <td class="rank">#29</td>
-          <td><div class="score-circle" style="--c:#22c55e">0</div>
-          <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0952188</td><td>03/10/2024</td>
-          <td class="name">Jones, William</td><td class="name">Jones, Patricia</td>
-          <td class="address">3858 Cedar Blvd, San Antonio, TX 78279</td>
-          <td class="legal">Lot 32 Standard Residential Conveyance</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
-          <td class="rank">#30</td>
-          <td><div class="score-circle" style="--c:#22c55e">0</div>
-          <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0934376</td><td>12/06/2023</td>
-          <td class="name">Miller, Barbara</td><td class="name">Johnson, James</td>
-          <td class="address">2983 Maple Ave, San Antonio, TX 78218</td>
-          <td class="legal">Lot 6 Standard Residential Conveyance</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
-          <td class="rank">#31</td>
-          <td><div class="score-circle" style="--c:#22c55e">0</div>
-          <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0733410</td><td>09/04/2024</td>
-          <td class="name">Garcia, Maria</td><td class="name">Jones, Patricia</td>
-          <td class="address">1396 Cedar Blvd, San Antonio, TX 78213</td>
-          <td class="legal">Lot 71 Standard Residential Conveyance</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
-          <td class="rank">#32</td>
-          <td><div class="score-circle" style="--c:#22c55e">0</div>
-          <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0717339</td><td>05/06/2024</td>
-          <td class="name">Garcia, Barbara</td><td class="name">Brown, James</td>
-          <td class="address">8550 Pine Rd, San Antonio, TX 78290</td>
-          <td class="legal">Lot 1 Standard Residential Conveyance</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#33</td>
-          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0526402</td><td>11/09/2025</td>
-          <td class="name">Brown, Barbara</td><td class="name">Johnson, Maria</td>
-          <td class="address">6904 Spruce Way, San Antonio, TX 78209</td>
-          <td class="legal">Lot 60 Standard Residential Conveyance</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202413393532</td>
+          <td style="white-space:nowrap;font-size:12px">9/7/2024</td>
+          <td class="doc-type">EASEMENT</td>
+          <td class="name">INTERNAL REVENUE...</td>
+          <td class="name">LOPEZ BARBARA</td>
+          <td class="address">9007 Oak Meadow, San Antonio TX 78255</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#34</td>
-          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0748678</td><td>02/03/2024</td>
-          <td class="name">Williams, Elizabeth</td><td class="name">Garcia, David</td>
-          <td class="address">9368 Cedar Blvd, San Antonio, TX 78292</td>
-          <td class="legal">Lot 13 Standard Residential Conveyance</td>
-          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="doc-num">202470992147</td>
+          <td style="white-space:nowrap;font-size:12px">2/5/2025</td>
+          <td class="doc-type">CORRECTION</td>
+          <td class="name">SMITH KAREN</td>
+          <td class="name">GONZALEZ MARIA</td>
+          <td class="address">7552 Stone Oak, San Antonio TX 78239</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
           <td class="rank">#35</td>
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202465144975</td>
+          <td style="white-space:nowrap;font-size:12px">4/8/2025</td>
+          <td class="doc-type">CORRECTION</td>
+          <td class="name">PACIFIC RRLF FUND...</td>
+          <td class="name">PACIFIC RRLF FUND...</td>
+          <td class="address">3686 River Walk, San Antonio TX 78248</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#36</td>
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202434244618</td>
+          <td style="white-space:nowrap;font-size:12px">7/19/2025</td>
+          <td class="doc-type">EASEMENT</td>
+          <td class="name">BROWN ELIZABETH</td>
+          <td class="name">PACIFIC RRLF FUND...</td>
+          <td class="address">1789 Sunset Ridge, San Antonio TX 78268</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#37</td>
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202445753026</td>
+          <td style="white-space:nowrap;font-size:12px">9/20/2025</td>
+          <td class="doc-type">CORRECTION</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="name">JONES SUSAN</td>
+          <td class="address">744 Rocky Point, San Antonio TX 78242</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#38</td>
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202460369058</td>
+          <td style="white-space:nowrap;font-size:12px">8/10/2025</td>
+          <td class="doc-type">CORRECTION</td>
+          <td class="name">RCN CAPITAL LLC</td>
+          <td class="name">DHI MORTGAGE COM...</td>
+          <td class="address">9427 Cedar Hills, San Antonio TX 78282</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#39</td>
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202472223217</td>
+          <td style="white-space:nowrap;font-size:12px">12/6/2024</td>
+          <td class="doc-type">EASEMENT</td>
+          <td class="name">JOHNSON JAMES</td>
+          <td class="name">ANDERSON MICHAEL</td>
+          <td class="address">9723 Oak Meadow, San Antonio TX 78297</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#40</td>
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202488239367</td>
+          <td style="white-space:nowrap;font-size:12px">12/19/2024</td>
+          <td class="doc-type">EASEMENT</td>
+          <td class="name">DHI MORTGAGE COM...</td>
+          <td class="name">JOHNSON THOMAS</td>
+          <td class="address">9157 Pine Valley, San Antonio TX 78240</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#41</td>
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202449496439</td>
+          <td style="white-space:nowrap;font-size:12px">8/15/2024</td>
+          <td class="doc-type">EASEMENT</td>
+          <td class="name">JOHNSON JOSE</td>
+          <td class="name">GOODLEAP LLC</td>
+          <td class="address">4514 Elm Crest, San Antonio TX 78258</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#42</td>
+          <td><div class="score-circle" style="--c:#22c55e">10</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202491691056</td>
+          <td style="white-space:nowrap;font-size:12px">3/9/2024</td>
+          <td class="doc-type">CORRECTION</td>
+          <td class="name">INTERNAL REVENUE...</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="address">9637 Pine Valley, San Antonio TX 78220</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-active">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#43</td>
           <td><div class="score-circle" style="--c:#22c55e">0</div>
           <div class="score-label" style="color:#22c55e">COLD</div></td>
-          <td class="doc-num">2024-0981594</td><td>04/03/2024</td>
-          <td class="name">Anderson, Linda</td><td class="name">Wilson, Elizabeth</td>
-          <td class="address">8592 Birch Ct, San Antonio, TX 78236</td>
-          <td class="legal">Lot 34 Standard Residential Conveyance</td>
+          <td class="doc-num">202499097877</td>
+          <td style="white-space:nowrap;font-size:12px">3/12/2025</td>
+          <td class="doc-type">DEED</td>
+          <td class="name">INDEPENDENT BANK</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="address">6341 Sunset Ridge, San Antonio TX 78286</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#44</td>
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202498611454</td>
+          <td style="white-space:nowrap;font-size:12px">6/4/2024</td>
+          <td class="doc-type">DEED</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="name">DAVIS KAREN</td>
+          <td class="address">5324 Stone Oak, San Antonio TX 78228</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#45</td>
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202434195067</td>
+          <td style="white-space:nowrap;font-size:12px">10/1/2025</td>
+          <td class="doc-type">DEED OF TRUST</td>
+          <td class="name">JONES DAVID</td>
+          <td class="name">RCN CAPITAL LLC</td>
+          <td class="address">7493 Alamo Heights, San Antonio TX 78243</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#46</td>
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202456645626</td>
+          <td style="white-space:nowrap;font-size:12px">10/25/2025</td>
+          <td class="doc-type">DEED OF TRUST</td>
+          <td class="name">BROWN ELIZABETH</td>
+          <td class="name">INTERNAL REVENUE...</td>
+          <td class="address">2940 Sunset Ridge, San Antonio TX 78247</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#47</td>
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202472773222</td>
+          <td style="white-space:nowrap;font-size:12px">6/19/2024</td>
+          <td class="doc-type">DEED</td>
+          <td class="name">INTERNAL REVENUE...</td>
+          <td class="name">MILLER SUSAN</td>
+          <td class="address">3850 Rocky Point, San Antonio TX 78284</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#48</td>
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202450004838</td>
+          <td style="white-space:nowrap;font-size:12px">10/22/2025</td>
+          <td class="doc-type">DEED OF TRUST</td>
+          <td class="name">MILLER THOMAS</td>
+          <td class="name">TEXAS COMMUNITY...</td>
+          <td class="address">6881 Cedar Hills, San Antonio TX 78278</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#49</td>
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202429139756</td>
+          <td style="white-space:nowrap;font-size:12px">1/25/2024</td>
+          <td class="doc-type">DEED OF TRUST</td>
+          <td class="name">INDEPENDENT BANK</td>
+          <td class="name">RCN CAPITAL LLC</td>
+          <td class="address">5657 Rocky Point, San Antonio TX 78239</td>
+          <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr><tr class="record-row ">
+          <td class="rank">#50</td>
+          <td><div class="score-circle" style="--c:#22c55e">0</div>
+          <div class="score-label" style="color:#22c55e">COLD</div></td>
+          <td class="doc-num">202419230465</td>
+          <td style="white-space:nowrap;font-size:12px">7/5/2025</td>
+          <td class="doc-type">DEED OF TRUST</td>
+          <td class="name">WILSON LINDA</td>
+          <td class="name">PACIFIC RRLF FUND...</td>
+          <td class="address">4466 Pine Valley, San Antonio TX 78255</td>
           <td class="flags"><span class="badge badge-inactive">Tax Lien</span><span class="badge badge-inactive">Code Viol.</span><span class="badge badge-inactive">Probate</span><span class="badge badge-inactive">Multi-Lien</span><span class="badge badge-inactive">Divorce/BK</span></td></tr></tbody>
 </table></div>
-<footer>Bexar County, TX Public Records - For informational use only</footer>
+<footer>Bexar County, TX Public Records &nbsp;·&nbsp; Data: bexar.tx.publicsearch.us &nbsp;·&nbsp; For informational use only</footer>
 <script>
 let cf='all';
 function filterRows(t,b){cf=t;document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');applyFilters(document.querySelector('.search-box').value);}
