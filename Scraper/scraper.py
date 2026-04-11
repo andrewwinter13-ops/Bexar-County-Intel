@@ -29,8 +29,8 @@ from bs4 import BeautifulSoup
 # CONFIGURATION — edit these to match your county
 # ─────────────────────────────────────────────────────────────────────────────
 
-COUNTY_NAME     = "San Diego County"
-BASE_URL        = "https://arcc.sdcounty.ca.gov/Pages/grantor-grantee-search.aspx"
+COUNTY_NAME = "Bexar County"
+BASE_URL    = "https://bexar.tx.publicsearch.us/results?department=RP&recordType=OR&dateFrom=01%2F01%2F2024&dateTo=12%2F31%2F2024"
 MAX_PAGES       = 20          # Safety cap on pagination
 DELAY_SECONDS   = 1.5         # Polite delay between requests
 REQUEST_TIMEOUT = 30          # Seconds before request times out
