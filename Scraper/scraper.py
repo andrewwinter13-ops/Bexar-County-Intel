@@ -299,34 +299,26 @@ def lookup_addresses(records):
 def _lookup_bcad(driver, grantor: str) -> str:
     """Look up property address on BCAD by owner name."""
     try:
-        # Use trueautomation which accepts query params
         name_enc = urllib.parse.quote_plus(grantor)
         url = f"https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110&searchtype=o&searchterm={name_enc}"
         driver.get(url)
-        time.sleep(3)
+        time.sleep(4)
 
-        # Look for address in results table
-        for sel in [
-            "table#searchResults td.tdAddress",
-            "table td:nth-child(3)",
-            "#searchResults tr td:nth-child(2)",
-            ".search-result-address",
-        ]:
-            try:
-                els = driver.find_elements(By.CSS_SELECTOR, sel)
-                for el in els:
-                    txt = el.text.strip()
-                    # Basic address validation — must have a number and letters
-                    if txt and any(c.isdigit() for c in txt) and len(txt) > 8:
-                        return txt.title()
-            except: continue
+        # Save debug HTML on first lookup
+        debug_file = Path("Scraper/debug_bcad.html")
+        if not debug_file.exists():
+            debug_file.write_text(driver.page_source)
+            log.info("Saved debug_bcad.html")
 
-        # Fallback: grab first link text that looks like an address
-        links = driver.find_elements(By.TAG_NAME, "a")
-        for link in links:
-            txt = link.text.strip()
-            if txt and any(c.isdigit() for c in txt) and len(txt) > 8 and "," not in txt[:3]:
-                return txt.title()
+        # Try every td on the page and log what we find
+        all_tds = driver.find_elements(By.TAG_NAME, "td")
+        for td in all_tds:
+            txt = td.text.strip()
+            if txt and any(c.isdigit() for c in txt) and 8 < len(txt) < 80:
+                # Looks like it could be an address
+                if any(word in txt.upper() for word in ["ST","AVE","DR","RD","LN","BLVD","WAY","CT","PL","TRL"]):
+                    log.info(f"  BCAD possible address: {txt}")
+                    return txt.title()
 
     except Exception as e:
         log.debug(f"BCAD lookup error: {e}")
@@ -339,22 +331,22 @@ def _lookup_hcad(driver, grantor: str) -> str:
         name_enc = urllib.parse.quote_plus(grantor)
         url = f"https://public.hcad.org/records/details.asp?searchtype=ownername&searchterm={name_enc}"
         driver.get(url)
-        time.sleep(3)
+        time.sleep(4)
 
-        # HCAD results table — address is usually in column 2
-        for sel in [
-            "table.resultsTable td:nth-child(2)",
-            "#resultsTable td.address",
-            "table tr td:nth-child(2)",
-            ".property-address",
-        ]:
-            try:
-                els = driver.find_elements(By.CSS_SELECTOR, sel)
-                for el in els:
-                    txt = el.text.strip()
-                    if txt and any(c.isdigit() for c in txt) and len(txt) > 8:
-                        return txt.title()
-            except: continue
+        # Save debug HTML on first lookup
+        debug_file = Path("Scraper/debug_hcad.html")
+        if not debug_file.exists():
+            debug_file.write_text(driver.page_source)
+            log.info("Saved debug_hcad.html")
+
+        # Try every td on the page
+        all_tds = driver.find_elements(By.TAG_NAME, "td")
+        for td in all_tds:
+            txt = td.text.strip()
+            if txt and any(c.isdigit() for c in txt) and 8 < len(txt) < 80:
+                if any(word in txt.upper() for word in ["ST","AVE","DR","RD","LN","BLVD","WAY","CT","PL","FWY","HWY"]):
+                    log.info(f"  HCAD possible address: {txt}")
+                    return txt.title()
 
     except Exception as e:
         log.debug(f"HCAD lookup error: {e}")
