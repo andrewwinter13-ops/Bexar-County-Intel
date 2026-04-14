@@ -429,6 +429,62 @@ def scrape_harris_selenium():
 # ─────────────────────────────────────────────────────────────────────────────
 # DEMO DATA
 # ─────────────────────────────────────────────────────────────────────────────
+ADDRESS_LOOKUP_MIN_SCORE = 70
+
+
+def lookup_hcad_addresses(records):
+    """Look up real property addresses from HCAD for 70+ scored records."""
+    targets = [r for r in records
+               if r.seller_score >= ADDRESS_LOOKUP_MIN_SCORE
+               and not r.property_address]
+
+    if not targets:
+        log.info("No 70+ records need address lookup.")
+        return
+
+    log.info(f"Looking up HCAD addresses for {len(targets)} records...")
+    driver = make_driver()
+
+    try:
+        for i, rec in enumerate(targets):
+            try:
+                name_enc = urllib.parse.quote_plus(rec.grantor)
+                url = f"https://public.hcad.org/records/details.asp?searchtype=ownername&searchterm={name_enc}"
+                driver.get(url)
+                time.sleep(3)
+
+                addr = ""
+                for sel in [
+                    "table.resultsTable td:nth-child(2)",
+                    "table tr td:nth-child(2)",
+                    "#resultsTable td",
+                ]:
+                    try:
+                        els = driver.find_elements(By.CSS_SELECTOR, sel)
+                        for el in els:
+                            txt = el.text.strip()
+                            if txt and any(c.isdigit() for c in txt) and len(txt) > 8:
+                                addr = txt.title()
+                                break
+                        if addr: break
+                    except: continue
+
+                if addr:
+                    rec.property_address = addr
+                    q = urllib.parse.quote(addr + ", Houston, TX")
+                    rec.maps_url = f"https://www.google.com/maps/search/?api=1&query={q}"
+                    log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → {addr}")
+                else:
+                    log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → not found")
+
+                time.sleep(1.5)
+            except Exception as e:
+                log.debug(f"HCAD lookup error: {e}")
+                continue
+    finally:
+        driver.quit()
+
+
 def generate_demo_records(n=50):
     firstnames = ["James","Maria","Robert","Linda","Michael","Patricia","William","Barbara","David","Elizabeth"]
     lastnames  = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Wilson","Anderson","Rodriguez","Martinez"]
@@ -711,7 +767,7 @@ document.getElementById('tbody').innerHTML = allRows.map((r,i) => {{
     <td class="addr-cell">${{r.address||'—'}}${{weekTag}}</td>
     <td><div class="lookup-btns">
       <a href="${{r.maps_url}}" target="_blank" class="maps-link">📍 Maps</a>
-      <a href="https://hcad.org/property-search/real-property/real-property-search/?search_type=owner_name&search_term=${{encodeURIComponent(r.grantor)}}" target="_blank" class="cad-link">🏠 HCAD</a>
+      <a href="https://public.hcad.org/records/details.asp?searchtype=ownername&search_term=${{encodeURIComponent(r.grantor)}}" target="_blank" class="cad-link">🏠 HCAD</a>
     </div></td>
     <td class="amt-cell">—</td>
   </tr>`;
@@ -819,6 +875,9 @@ def main():
     else:
         records.sort(key=lambda r: r.seller_score, reverse=True)
         log.info(f"SUCCESS — {len(records)} real records!")
+
+    # Look up real addresses for 70+ scored records
+    lookup_hcad_addresses(records)
 
     new_leads = find_new_leads(records, prev_doc_numbers)
     new_lead_doc_numbers = {r.document_number for r in new_leads}
