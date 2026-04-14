@@ -251,6 +251,116 @@ def scrape_county(url, county, city):
 
 
 # ─── DEMO DATA ───────────────────────────────────────────────────────────────
+ADDRESS_LOOKUP_MIN_SCORE = 70  # Only look up addresses for records scoring 70+
+
+
+def lookup_addresses(records):
+    """
+    For records scoring 70+, look up the real property address from
+    BCAD (Bexar) or HCAD (Harris) using Selenium.
+    Updates rec.property_address and rec.maps_url in place.
+    """
+    targets = [r for r in records
+               if r.seller_score >= ADDRESS_LOOKUP_MIN_SCORE
+               and not r.property_address]
+
+    if not targets:
+        log.info("No 70+ records need address lookup.")
+        return
+
+    log.info(f"Looking up addresses for {len(targets)} records scoring 70+...")
+    driver = make_driver()
+
+    try:
+        for i, rec in enumerate(targets):
+            try:
+                if rec.county == "Harris":
+                    addr = _lookup_hcad(driver, rec.grantor)
+                else:
+                    addr = _lookup_bcad(driver, rec.grantor)
+
+                if addr:
+                    rec.property_address = addr
+                    city = "Houston" if rec.county == "Harris" else "San Antonio"
+                    rec.maps_url = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(addr + ', ' + city + ', TX')}"
+                    log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → {addr}")
+                else:
+                    log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → no address found")
+
+                time.sleep(1.5)  # polite delay between lookups
+
+            except Exception as e:
+                log.debug(f"  Address lookup error for {rec.grantor}: {e}")
+                continue
+    finally:
+        driver.quit()
+
+
+def _lookup_bcad(driver, grantor: str) -> str:
+    """Look up property address on BCAD by owner name."""
+    try:
+        # Use trueautomation which accepts query params
+        name_enc = urllib.parse.quote_plus(grantor)
+        url = f"https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110&searchtype=o&searchterm={name_enc}"
+        driver.get(url)
+        time.sleep(3)
+
+        # Look for address in results table
+        for sel in [
+            "table#searchResults td.tdAddress",
+            "table td:nth-child(3)",
+            "#searchResults tr td:nth-child(2)",
+            ".search-result-address",
+        ]:
+            try:
+                els = driver.find_elements(By.CSS_SELECTOR, sel)
+                for el in els:
+                    txt = el.text.strip()
+                    # Basic address validation — must have a number and letters
+                    if txt and any(c.isdigit() for c in txt) and len(txt) > 8:
+                        return txt.title()
+            except: continue
+
+        # Fallback: grab first link text that looks like an address
+        links = driver.find_elements(By.TAG_NAME, "a")
+        for link in links:
+            txt = link.text.strip()
+            if txt and any(c.isdigit() for c in txt) and len(txt) > 8 and "," not in txt[:3]:
+                return txt.title()
+
+    except Exception as e:
+        log.debug(f"BCAD lookup error: {e}")
+    return ""
+
+
+def _lookup_hcad(driver, grantor: str) -> str:
+    """Look up property address on HCAD by owner name."""
+    try:
+        name_enc = urllib.parse.quote_plus(grantor)
+        url = f"https://public.hcad.org/records/details.asp?searchtype=ownername&searchterm={name_enc}"
+        driver.get(url)
+        time.sleep(3)
+
+        # HCAD results table — address is usually in column 2
+        for sel in [
+            "table.resultsTable td:nth-child(2)",
+            "#resultsTable td.address",
+            "table tr td:nth-child(2)",
+            ".property-address",
+        ]:
+            try:
+                els = driver.find_elements(By.CSS_SELECTOR, sel)
+                for el in els:
+                    txt = el.text.strip()
+                    if txt and any(c.isdigit() for c in txt) and len(txt) > 8:
+                        return txt.title()
+            except: continue
+
+    except Exception as e:
+        log.debug(f"HCAD lookup error: {e}")
+    return ""
+
+
 def demo(n=50, county="Bexar", city="San Antonio"):
     fnames = ["James","Maria","Robert","Linda","Michael","Patricia","William","Barbara","David","Elizabeth"]
     lnames = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Wilson","Anderson","Rodriguez","Martinez"]
@@ -313,12 +423,12 @@ def build_dashboard(all_records, new_docs):
     for i,r in enumerate(all_records):
         nb = '<span class="new-badge">NEW</span>' if r.document_number in new_docs else ""
         # Build appraisal district lookup URL based on county
-        grantor_enc = urllib.parse.quote(r.grantor)
+        grantor_enc = urllib.parse.quote_plus(r.grantor)
         if r.county == "Harris":
-            cad_url = f"https://hcad.org/property-search/real-property/real-property-search/?search_type=owner_name&search_term={grantor_enc}"
+            cad_url = f"https://public.hcad.org/records/details.asp?searchtype=ownername&searchterm={grantor_enc}"
             cad_label = "HCAD"
         else:
-            cad_url = f"https://esearch.bcad.org/?SearchType=o&SearchValue={grantor_enc}"
+            cad_url = f"https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110&searchtype=o&searchterm={grantor_enc}"
             cad_label = "BCAD"
         ml = (f'<div class="lookup-btns">'
               f'<a href="{r.maps_url}" target="_blank" class="maps-link">📍 Maps</a>'
@@ -598,6 +708,9 @@ def main():
     all_records = bexar_records + harris_records
     all_records.sort(key=lambda r: r.seller_score, reverse=True)
     log.info(f"Total combined: {len(all_records)}")
+
+    # Look up real addresses for 70+ scored records
+    lookup_addresses(all_records)
 
     # New leads detection
     new_leads = find_new(all_records, prev)
