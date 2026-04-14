@@ -1,83 +1,55 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# Motivated Seller Lead Scraper — GitHub Actions Workflow
-# Runs automatically on a schedule and can be triggered manually.
-# ─────────────────────────────────────────────────────────────────────────────
-
 name: Scrape County Records
 
 on:
-  # Run every weekday at 7 AM UTC (midnight Pacific)
   schedule:
     - cron: "0 7 * * 1-5"
-
-  # Allow manual trigger from the Actions tab
   workflow_dispatch:
-    inputs:
-      max_pages:
-        description: "Max pages to scrape (default: 20)"
-        required: false
-        default: "20"
 
 jobs:
   scrape:
-    name: Scrape & Publish
     runs-on: ubuntu-latest
-
     permissions:
-      contents: write   # needed to commit output files back to the repo
+      contents: write
 
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────────────
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # ── 2. Python setup ──────────────────────────────────────────────────
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
 
-      # ── 3. Install dependencies ──────────────────────────────────────────
-      - name: Install dependencies
+      - name: Install Chrome
         run: |
-          pip install --upgrade pip
-          pip install requests beautifulsoup4 lxml
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
 
-      # ── 4. Run scraper ───────────────────────────────────────────────────
+      - name: Install Python dependencies
+        run: |
+          pip install selenium webdriver-manager requests beautifulsoup4
+
       - name: Run scraper
-        env:
-          MAX_PAGES: ${{ github.event.inputs.max_pages || '20' }}
-        run: python src/scraper.py
+        run: python Scraper/scraper.py
 
-      # ── 5. Commit output back to repo ────────────────────────────────────
-      - name: Commit & push results
+      - name: Commit results
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "🤖 Auto-update: county records scraped ${{ github.run_id }}"
-          file_pattern: "data/output.json dashboard/index.html"
+          commit_message: "Auto-update leads ${{ github.run_id }}"
+          file_pattern: "Scraper/output.json Scraper/index.html"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "github-actions[bot]@users.noreply.github.com"
 
-      # ── 6. Upload artifacts for download from Actions UI ─────────────────
-      - name: Upload JSON artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: leads-${{ github.run_id }}
-          path: |
-            data/output.json
-            dashboard/index.html
-          retention-days: 30
-
-      # ── 7. Summary ───────────────────────────────────────────────────────
-      - name: Write job summary
+      - name: Summary
         run: |
-          echo "## 🏠 Scrape Complete" >> $GITHUB_STEP_SUMMARY
-          TOTAL=$(python -c "import json; d=json.load(open('data/output.json')); print(d['total_records'])")
-          HOT=$(python -c "import json; d=json.load(open('data/output.json')); print(sum(1 for r in d['records'] if r['seller_score']>=50))")
-          WARM=$(python -c "import json; d=json.load(open('data/output.json')); print(sum(1 for r in d['records'] if 25<=r['seller_score']<50))")
-          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "## Scrape Complete" >> $GITHUB_STEP_SUMMARY
+          TOTAL=$(python -c "import json; d=json.load(open('Scraper/output.json')); print(d['total_records'])")
+          LIVE=$(python -c "import json; d=json.load(open('Scraper/output.json')); print(d.get('live_data', False))")
+          HOT=$(python -c "import json; d=json.load(open('Scraper/output.json')); print(sum(1 for r in d['records'] if r['seller_score']>=50))")
+          WARM=$(python -c "import json; d=json.load(open('Scraper/output.json')); print(sum(1 for r in d['records'] if 25<=r['seller_score']<50))")
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Live data | $LIVE |" >> $GITHUB_STEP_SUMMARY
           echo "| Total records | $TOTAL |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔥 Hot leads (50+) | $HOT |" >> $GITHUB_STEP_SUMMARY
-          echo "| ⚠️ Warm leads (25–49) | $WARM |" >> $GITHUB_STEP_SUMMARY
+          echo "| Hot leads | $HOT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Warm leads | $WARM |" >> $GITHUB_STEP_SUMMARY
