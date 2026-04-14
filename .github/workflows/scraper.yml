@@ -30,12 +30,14 @@ jobs:
           pip install selenium webdriver-manager requests beautifulsoup4
 
       - name: Run scraper
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: python Scraper/scraper.py
 
       - name: Commit results
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Auto-update leads"
-          file_pattern: "Scraper/output.json Scraper/index.html"
+          file_pattern: "Scraper/output.json Scraper/index.html Scraper/prev_doc_numbers.json"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "github-actions[bot]@users.noreply.github.com"
