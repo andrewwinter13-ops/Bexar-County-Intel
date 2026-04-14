@@ -29,15 +29,20 @@ jobs:
         run: |
           pip install selenium webdriver-manager requests beautifulsoup4
 
-      - name: Run scraper
+      - name: Run Bexar County scraper
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: python Scraper/scraper.py
+
+      - name: Run Harris County scraper
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: python Harris/harris_scraper.py
 
       - name: Commit results
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Auto-update leads"
-          file_pattern: "Scraper/output.json Scraper/index.html Scraper/prev_doc_numbers.json"
+          file_pattern: "Scraper/output.json Scraper/index.html Scraper/prev_doc_numbers.json Harris/output.json Harris/index.html Harris/prev_doc_numbers.json"
           commit_user_name: "github-actions[bot]"
           commit_user_email: "github-actions[bot]@users.noreply.github.com"
