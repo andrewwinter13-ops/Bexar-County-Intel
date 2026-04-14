@@ -48,7 +48,7 @@ SLACK_WEBHOOK = os.environ.get("SLACK_WEBHOOK_URL", "")
 # ─────────────────────────────────────────────────────────────────────────────
 SCORE_WEIGHTS = {
     "tax_delinquent": 30, "code_violation": 25,
-    "probate_filing": 20, "multiple_liens": 30, "divorce_bankruptcy": 10,
+    "probate_filing": 20, "multiple_liens": 15, "divorce_bankruptcy": 10,
 }
 DISTRESS_KEYWORDS = {
     "tax_delinquent":     ["tax lien", "federal tax lien", "state tax lien", "delinquent tax", "irs lien", "ftl", "release of ftl"],
@@ -425,223 +425,426 @@ def records_to_csv(records) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 # DASHBOARD
 # ─────────────────────────────────────────────────────────────────────────────
-def build_dashboard(records, new_lead_doc_numbers: set):
-    def score_color(s):
-        return "#ef4444" if s>=50 else "#f97316" if s>=25 else "#22c55e"
-    def score_label(s):
-        return "HOT" if s>=50 else "WARM" if s>=25 else "COLD"
-    def days_label(d):
-        if d==0: return "—"
-        if d>365: return f'<span class="days hot-age">{d}d</span>'
-        if d>180: return f'<span class="days warm-age">{d}d</span>'
-        return f'<span class="days">{d}d</span>'
-    def active_signals(r):
-        sigs=[]
-        if r.tax_delinquent: sigs.append("Tax Lien")
-        if r.code_violation: sigs.append("Code Viol.")
-        if r.probate_filing: sigs.append("Probate")
-        if r.multiple_liens: sigs.append("Multi-Lien")
-        if r.divorce_bankruptcy: sigs.append("Divorce/BK")
-        return " ".join(f'<span class="badge badge-active">{s}</span>' for s in sigs) or "—"
 
-    rows_html = ""
-    for i, r in enumerate(records):
-        is_new = r.document_number in new_lead_doc_numbers
-        new_badge = '<span class="new-badge">NEW</span>' if is_new else ""
-        maps_link = (f'<a href="{r.maps_url}" target="_blank" class="maps-link">📍 Search Maps</a>'
-                     if r.maps_url else "—")
-        rows_html += f"""<tr class="record-row {'hot-row' if r.seller_score>=50 else ''}" data-score="{r.seller_score}" data-text="{(r.grantor+r.grantee+r.doc_type).lower().replace('"','')}">
-          <td class="rank">#{i+1}{new_badge}</td>
-          <td><div class="score-circle" style="--c:{score_color(r.seller_score)}">{r.seller_score}</div>
-          <div class="slbl" style="color:{score_color(r.seller_score)}">{score_label(r.seller_score)}</div></td>
-          <td class="mono sm">{r.document_number}</td>
-          <td class="nowrap sm">{r.file_date}</td>
-          <td>{days_label(r.days_on_record)}</td>
-          <td class="nowrap bold">{r.doc_type}</td>
-          <td class="name" title="{r.grantor}">{r.grantor}</td>
-          <td class="name" title="{r.grantee}">{r.grantee}</td>
-          <td class="mono sm">{r.legal_description[:40]}{'…' if len(r.legal_description)>40 else ''}</td>
-          <td>{maps_link}</td>
-          <td>{active_signals(r)}</td></tr>"""
+# ─────────────────────────────────────────────────────────────────────────────
+# DASHBOARD
+# ─────────────────────────────────────────────────────────────────────────────
+def build_dashboard(records, new_lead_doc_numbers=None):
+    if new_lead_doc_numbers is None:
+        new_lead_doc_numbers = set()
 
-    total  = len(records)
-    hot    = sum(1 for r in records if r.seller_score>=50)
-    warm   = sum(1 for r in records if 25<=r.seller_score<50)
-    cold   = total-hot-warm
-    above30= sum(1 for r in records if r.seller_score>=30)
-    avg    = round(sum(r.seller_score for r in records)/total,1) if total else 0
-    gen    = datetime.utcnow().strftime("%B %d, %Y at %H:%M UTC")
-    is_live= any(r.source_url and "publicsearch" in r.source_url for r in records)
-    data_note = "LIVE DATA" if is_live else "DEMO DATA"
-    csv_data  = records_to_csv(records).replace("\\","\\\\").replace("`","'")
+    now_str   = datetime.utcnow().strftime("%-m/%-d/%Y, %-I:%M:%S %p")
     today_str = datetime.utcnow().strftime("%Y-%m-%d")
+    total     = len(records)
 
-    import random as _rnd
-    _rnd.seed(42)
-    warm_leads = [r for r in records if r.seller_score >= 25]
-    map_data = []
-    for r in warm_leads:
-        lat = 29.3 + _rnd.uniform(0, 0.35)
-        lng = -98.65 + _rnd.uniform(0, 0.45)
-        map_data.append({
-            "name": r.grantor, "score": r.seller_score,
-            "doc_type": r.doc_type, "date": r.file_date,
-            "days": r.days_on_record, "maps_url": r.maps_url,
-            "lat": round(lat,5), "lng": round(lng,5),
+    # Type counts
+    def count_type(keywords):
+        return sum(1 for r in records if any(k in r.get("doc_type","").upper() for k in keywords))
+
+    # Build rows JSON for JS
+    rows_data = []
+    for r in records:
+        doc_type = r.get("doc_type","") if isinstance(r, dict) else r.doc_type
+        grantor  = r.get("grantor","") if isinstance(r, dict) else r.grantor
+        grantee  = r.get("grantee","") if isinstance(r, dict) else r.grantee
+        doc_num  = r.get("document_number","") if isinstance(r, dict) else r.document_number
+        filed    = r.get("file_date","") if isinstance(r, dict) else r.file_date
+        legal    = r.get("legal_description","") if isinstance(r, dict) else r.legal_description
+        score    = r.get("seller_score",0) if isinstance(r, dict) else r.seller_score
+        days     = r.get("days_on_record",0) if isinstance(r, dict) else r.days_on_record
+        maps_url = r.get("maps_url","") if isinstance(r, dict) else r.maps_url
+        address  = r.get("property_address","") if isinstance(r, dict) else r.property_address
+        tax_d    = r.get("tax_delinquent",False) if isinstance(r, dict) else r.tax_delinquent
+        code_v   = r.get("code_violation",False) if isinstance(r, dict) else r.code_violation
+        prob     = r.get("probate_filing",False) if isinstance(r, dict) else r.probate_filing
+        multi    = r.get("multiple_liens",False) if isinstance(r, dict) else r.multiple_liens
+        divorce  = r.get("divorce_bankruptcy",False) if isinstance(r, dict) else r.divorce_bankruptcy
+
+        signals = []
+        if tax_d:  signals.append("Tax lien")
+        if code_v: signals.append("Code violation")
+        if prob:   signals.append("Probate / estate")
+        if multi:  signals.append("Judgment lien")
+        if divorce:signals.append("Lis pendens")
+
+        # Abbreviate doc type
+        type_map = {
+            "FEDERAL TAX LIEN":"TAX","STATE TAX LIEN":"TAX","RELEASE OF FTL":"TAX",
+            "JUDGMENT LIEN":"JUD","JUDGMENT":"JUD","LIS PENDENS":"LIS",
+            "NOTICE OF DEFAULT":"NOD","MECHANIC LIEN":"MECH","DEED OF TRUST":"DOT",
+            "UCC":"UCC","PROBATE":"PRO","AFFIDAVIT":"AFF","DEED":"DEED",
+            "ASSIGNMENT":"ASGN","QUITCLAIM":"QCD","EASEMENT":"ESM",
+        }
+        code = "OTH"
+        for k,v in type_map.items():
+            if k in doc_type.upper():
+                code = v
+                break
+
+        is_new = doc_num in new_lead_doc_numbers
+        this_week = days <= 7
+
+        rows_data.append({
+            "score": score, "doc_type": doc_type, "code": code,
+            "doc_num": doc_num, "filed": filed, "days": days,
+            "grantor": grantor, "grantee": grantee,
+            "address": address or legal[:60],
+            "legal": legal, "maps_url": maps_url,
+            "signals": signals, "is_new": is_new, "this_week": this_week,
+            "tax_d": tax_d, "code_v": code_v, "prob": prob,
+            "multi": multi, "divorce": divorce,
         })
-    markers_json = json.dumps(map_data)
 
-    return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>{COUNTY_NAME} Motivated Seller Leads</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    # Type category counts for header stats
+    tax_count  = sum(1 for r in rows_data if r["code"]=="TAX")
+    jud_count  = sum(1 for r in rows_data if r["code"]=="JUD")
+    lis_count  = sum(1 for r in rows_data if r["code"]=="LIS")
+    nod_count  = sum(1 for r in rows_data if r["code"]=="NOD")
+    new_count  = sum(1 for r in rows_data if r["is_new"])
+    week_count = sum(1 for r in rows_data if r["this_week"])
+
+    rows_json = json.dumps(rows_data)
+
+    return f"""<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>{COUNTY_NAME} Motivated Sellers</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{{--bg:#0b0d12;--surface:#13161f;--border:#1e2233;--text:#e2e8f0;--muted:#64748b;--accent:#6366f1;}}
 *{{box-sizing:border-box;margin:0;padding:0;}}
-body{{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;}}
-header{{background:linear-gradient(135deg,#0f1117,#13161f);border-bottom:1px solid var(--border);padding:1.5rem 2rem;}}
-.hi{{max-width:1800px;margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;flex-wrap:wrap;}}
-.eyebrow{{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;}}
-h1{{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;background:linear-gradient(135deg,#e2e8f0 30%,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}}
-.sub{{font-size:12px;color:var(--muted);margin-top:.2rem;font-family:'DM Mono',monospace;}}
-.db{{display:inline-block;font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;margin-top:5px;background:{'rgba(34,197,94,.15)' if is_live else 'rgba(234,179,8,.15)'};color:{'#86efac' if is_live else '#fde047'};border:1px solid {'rgba(34,197,94,.3)' if is_live else 'rgba(234,179,8,.3)'};}}
-.stats{{display:flex;gap:.75rem;flex-wrap:wrap;}}
-.sc{{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:.75rem 1.2rem;min-width:90px;text-align:center;}}
-.sc .n{{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;line-height:1;}}
-.sc .l{{font-size:10px;color:var(--muted);margin-top:.2rem;text-transform:uppercase;letter-spacing:.1em;}}
-.nh{{color:#ef4444;}}.nw{{color:#f97316;}}.nc{{color:#22c55e;}}.nt{{color:var(--accent);}}.na{{color:#94a3b8;}}.n30{{color:#a78bfa;}}
-.toolbar{{max-width:1800px;margin:1rem auto 0;padding:0 2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}}
-.fb{{background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;padding:.4rem .9rem;transition:all .15s;}}
-.fb:hover,.fb.active{{border-color:var(--accent);color:var(--text);background:rgba(99,102,241,.1);}}
-.sb{{background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;padding:.4rem .9rem;width:180px;outline:none;}}
-.sb:focus{{border-color:var(--accent);}}.sb::placeholder{{color:var(--muted);}}
-.map-btn{{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:7px;color:#86efac;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;padding:.4rem .9rem;}}
-.map-btn:hover{{background:rgba(34,197,94,.2);}}
-.exp-btn{{margin-left:auto;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);border-radius:7px;color:#a5b4fc;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;padding:.4rem .9rem;}}
-.exp-btn:hover{{background:rgba(99,102,241,.22);}}
-.map-wrap{{max-width:1800px;margin:.75rem auto 0;padding:0 2rem;display:none;}}
-.map-wrap.show{{display:block;}}
-.map-note{{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:.5rem;}}
-#map{{width:100%;height:460px;border-radius:10px;border:1px solid var(--border);}}
-.tw{{max-width:1800px;margin:1rem auto 2rem;padding:0 2rem;overflow-x:auto;}}
-table{{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:12px;}}
-thead th{{background:var(--surface);border-bottom:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;padding:.7rem .8rem;text-align:left;text-transform:uppercase;white-space:nowrap;}}
-tbody tr{{border-bottom:1px solid var(--border);transition:background .1s;}}
-tbody tr:hover{{background:rgba(255,255,255,.025);}}.hot-row{{background:rgba(239,68,68,.04);}}.hidden{{display:none;}}
-td{{padding:.6rem .8rem;vertical-align:middle;}}
-.rank{{color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;text-align:center;position:relative;}}
-.new-badge{{display:inline-block;background:rgba(167,139,250,.2);color:#c4b5fd;border:1px solid rgba(167,139,250,.4);border-radius:3px;font-family:'DM Mono',monospace;font-size:8px;padding:1px 4px;margin-left:4px;vertical-align:middle;}}
-.score-circle{{width:40px;height:40px;border-radius:50%;border:2px solid var(--c,#22c55e);color:var(--c,#22c55e);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;margin:0 auto 3px;}}
-.slbl{{text-align:center;font-size:9px;font-family:'DM Mono',monospace;}}
-.mono{{font-family:'DM Mono',monospace;color:var(--muted);}}
-.sm{{font-size:11px;}}.nowrap{{white-space:nowrap;}}.bold{{font-weight:500;}}
-.name{{white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;}}
-.days{{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}}
-.hot-age{{color:#ef4444;font-weight:500;}}.warm-age{{color:#f97316;}}
-.maps-link{{color:#60a5fa;text-decoration:none;font-size:11px;white-space:nowrap;}}
-.maps-link:hover{{color:#93c5fd;}}
-.badge{{border-radius:4px;display:inline-block;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;margin:1px;padding:2px 6px;white-space:nowrap;}}
-.badge-active{{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);}}
-footer{{border-top:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;padding:1rem 2rem;text-align:center;}}
-</style></head><body>
-<header><div class="hi">
-  <div>
-    <div class="eyebrow">Motivated Seller Intelligence</div>
-    <h1>{COUNTY_NAME}<br>Lead Dashboard</h1>
-    <div class="sub">Generated {gen} &nbsp;·&nbsp; {total} records &nbsp;·&nbsp; bexar.tx.publicsearch.us</div>
-    <div class="db">{data_note}</div>
-  </div>
-  <div class="stats">
-    <div class="sc"><div class="n nh">{hot}</div><div class="l">Hot 50+</div></div>
-    <div class="sc"><div class="n nw">{warm}</div><div class="l">Warm 25+</div></div>
-    <div class="sc"><div class="n n30">{above30}</div><div class="l">Score 30+</div></div>
-    <div class="sc"><div class="n nc">{cold}</div><div class="l">Cold</div></div>
-    <div class="sc"><div class="n nt">{total}</div><div class="l">Total</div></div>
-    <div class="sc"><div class="n na">{avg}</div><div class="l">Avg Score</div></div>
-  </div>
-</div></header>
+:root{{
+  --bg:#0e0e0e;--surface:#161616;--border:#2a2a2a;
+  --text:#f0f0f0;--muted:#666;--accent:#f5a623;
+  --purple:#a855f7;--orange:#f97316;--red:#ef4444;--green:#22c55e;--blue:#3b82f6;
+}}
+body{{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;display:flex;flex-direction:column;min-height:100vh;}}
 
-<div class="toolbar">
-  <button class="fb active" onclick="filt('all',this)">All</button>
-  <button class="fb" onclick="filt('hot',this)">🔥 Hot (50+)</button>
-  <button class="fb" onclick="filt('warm',this)">⚠️ Warm (25-49)</button>
-  <button class="fb" onclick="filt('30',this)">⭐ Score 30+</button>
-  <button class="fb" onclick="filt('new',this)">🆕 New Today</button>
-  <button class="fb" onclick="filt('cold',this)">✓ Cold</button>
-  <input class="sb" type="text" placeholder="Search name, doc type..." oninput="search(this.value)">
-  <button class="map-btn" onclick="toggleMap()">🗺️ Warm Leads Map</button>
-  <button class="exp-btn" onclick="exportCSV()">⬇ Export CSV</button>
+/* TOP BAR */
+.topbar{{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.5rem;border-bottom:1px solid var(--border);background:#111;}}
+.brand{{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.15em;color:var(--text);}}
+.brand span{{color:var(--accent);}}
+.updated{{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}}
+.updated::before{{content:'● ';color:var(--green);}}
+.export-btn{{background:var(--accent);color:#000;border:none;border-radius:5px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:.4rem 1rem;cursor:pointer;display:flex;align-items:center;gap:5px;}}
+.export-btn:hover{{background:#e09510;}}
+
+/* HERO HEADER */
+.hero{{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--border);}}
+.hero h1{{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,6vw,4rem);line-height:.95;color:var(--accent);letter-spacing:.05em;}}
+.hero h2{{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,6vw,4rem);line-height:.95;color:var(--text);letter-spacing:.05em;margin-bottom:.75rem;}}
+.hero-meta{{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}}
+.total-badge{{float:right;text-align:right;}}
+.total-num{{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--accent);line-height:1;}}
+.total-lbl{{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;}}
+
+/* STATS BAR */
+.stats-bar{{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));border-bottom:1px solid var(--border);}}
+.stat-cell{{padding:.9rem 1.5rem;border-right:1px solid var(--border);}}
+.stat-cell:last-child{{border-right:none;}}
+.stat-num{{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;}}
+.stat-lbl{{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}}
+.purple{{color:var(--purple);}}.orange{{color:var(--orange);}}.red{{color:var(--red);}}.blue{{color:var(--blue);}}.green{{color:var(--green);}}.accent{{color:var(--accent);}}
+
+/* FILTER ROW */
+.filter-row{{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;background:#111;}}
+.search-input{{background:#1a1a1a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:.4rem .8rem;width:200px;outline:none;}}
+.search-input:focus{{border-color:var(--accent);}}
+.search-input::placeholder{{color:var(--muted);}}
+select.type-sel{{background:#1a1a1a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:.4rem .8rem;outline:none;cursor:pointer;}}
+select.score-sel{{background:#1a1a1a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:.4rem .8rem;outline:none;cursor:pointer;}}
+.chip{{background:#1a1a1a;border:1px solid var(--border);border-radius:20px;color:var(--muted);cursor:pointer;font-size:11px;padding:.3rem .85rem;white-space:nowrap;transition:all .15s;}}
+.chip:hover,.chip.active{{background:rgba(245,166,35,.12);border-color:var(--accent);color:var(--accent);}}
+.chip.new-chip{{border-color:var(--purple);color:var(--purple);}}
+.chip.new-chip.active{{background:rgba(168,85,247,.15);}}
+
+/* MAIN LAYOUT */
+.main{{display:flex;flex:1;overflow:hidden;}}
+.table-pane{{flex:1;overflow:auto;}}
+.detail-pane{{width:320px;border-left:1px solid var(--border);background:#111;overflow-y:auto;flex-shrink:0;display:none;}}
+.detail-pane.open{{display:block;}}
+
+/* TABLE */
+table{{width:100%;border-collapse:collapse;}}
+thead th{{background:#111;border-bottom:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;font-weight:500;padding:.6rem 1rem;text-align:left;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;position:sticky;top:0;z-index:10;}}
+tbody tr{{border-bottom:1px solid #1a1a1a;cursor:pointer;transition:background .1s;}}
+tbody tr:hover{{background:#1a1a1a;}}
+tbody tr.selected{{background:#1f1a0e;border-left:2px solid var(--accent);}}
+tbody tr.hidden{{display:none;}}
+td{{padding:.55rem 1rem;vertical-align:middle;}}
+
+/* SCORE CIRCLE */
+.sc{{width:36px;height:36px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;margin:0 auto;}}
+.sc.hot{{border-color:var(--accent);color:var(--accent);}}
+.sc.warm{{border-color:var(--orange);color:var(--orange);}}
+.sc.cold{{border-color:var(--muted);color:var(--muted);}}
+
+/* TYPE BADGE */
+.type-badge{{border-radius:4px;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;padding:3px 8px;white-space:nowrap;display:inline-block;}}
+.tb-TAX{{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);}}
+.tb-JUD{{background:rgba(168,85,247,.15);color:#d8b4fe;border:1px solid rgba(168,85,247,.3);}}
+.tb-LIS{{background:rgba(249,115,22,.15);color:#fdba74;border:1px solid rgba(249,115,22,.3);}}
+.tb-NOD{{background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.4);}}
+.tb-MECH{{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3);}}
+.tb-DOT{{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.25);}}
+.tb-OTH,.tb-UCC,.tb-ASGN,.tb-AFF,.tb-DEED,.tb-QCD,.tb-ESM,.tb-PRO{{background:rgba(255,255,255,.06);color:#aaa;border:1px solid rgba(255,255,255,.12);}}
+
+.code-cell{{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}}
+.filed-cell{{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;}}
+.owner-cell{{font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}
+.grantor-cell{{color:#aaa;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}
+.addr-cell{{color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}}
+.amt-cell{{color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;}}
+.new-tag{{display:inline-block;background:rgba(168,85,247,.18);color:#c4b5fd;border:1px solid rgba(168,85,247,.35);border-radius:3px;font-size:9px;font-family:'DM Mono',monospace;padding:1px 5px;margin-left:4px;vertical-align:middle;}}
+.week-tag{{display:inline-block;background:rgba(245,166,35,.15);color:var(--accent);border:1px solid rgba(245,166,35,.3);border-radius:3px;font-size:9px;font-family:'DM Mono',monospace;padding:1px 5px;margin-left:4px;vertical-align:middle;}}
+
+/* DETAIL PANE */
+.detail-header{{display:flex;align-items:center;justify-content:space-between;padding:1rem;border-bottom:1px solid var(--border);}}
+.detail-title{{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;}}
+.close-btn{{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;}}
+.close-btn:hover{{color:var(--text);}}
+.detail-score{{text-align:center;padding:1.5rem 1rem 1rem;border-bottom:1px solid var(--border);}}
+.big-score{{width:80px;height:80px;border-radius:50%;border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--accent);margin:0 auto .75rem;}}
+.detail-name{{font-weight:600;font-size:15px;text-align:center;}}
+.detail-sub{{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:4px;}}
+.detail-chips{{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:.75rem;}}
+.detail-chip{{border-radius:3px;font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;}}
+.section-title{{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:.75rem 1rem .4rem;border-top:1px solid var(--border);}}
+.detail-row{{display:flex;justify-content:space-between;align-items:flex-start;padding:.35rem 1rem;gap:1rem;}}
+.detail-key{{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0;}}
+.detail-val{{font-size:12px;text-align:right;word-break:break-word;}}
+.detail-link{{color:var(--blue);text-decoration:none;font-size:12px;}}
+.detail-link:hover{{color:#60a5fa;}}
+.underwrite-btn{{display:block;margin:1rem;background:var(--green);color:#000;border:none;border-radius:6px;padding:.75rem;font-size:13px;font-weight:600;cursor:pointer;text-align:center;width:calc(100% - 2rem);}}
+.underwrite-btn:hover{{background:#16a34a;color:#fff;}}
+</style>
+</head><body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand"><span>BEXAR</span>LEADS</div>
+  <div class="updated">Updated {now_str}</div>
+  <button class="export-btn" onclick="exportCSV()">⬇ EXPORT GHL CSV</button>
 </div>
 
-<div class="map-wrap" id="mapWrap">
-  <div class="map-note">Warm + hot leads across San Antonio &nbsp;·&nbsp; Click any pin for details</div>
-  <div id="map"></div>
+<!-- HERO -->
+<div class="hero">
+  <div class="total-badge">
+    <div class="total-num">{total}</div>
+    <div class="total-lbl">Total Leads</div>
+  </div>
+  <h1>{COUNTY_NAME.upper()}</h1>
+  <h2>MOTIVATED SELLERS</h2>
+  <div class="hero-meta">bexar.tx.publicsearch.us &nbsp;·&nbsp; Generated {datetime.utcnow().strftime("%Y-%m-%d")}</div>
 </div>
 
-<div class="tw"><table>
-  <thead><tr>
-    <th>#</th><th>Score</th><th>Doc #</th><th>Filed</th><th>Age</th>
-    <th>Doc Type</th><th>Grantor (Seller)</th><th>Grantee (Buyer)</th>
-    <th>Legal Description</th><th>Maps</th><th>Signals</th>
-  </tr></thead>
-  <tbody id="tb">{rows_html}</tbody>
-</table></div>
-<footer>{COUNTY_NAME} Public Records &nbsp;·&nbsp; bexar.tx.publicsearch.us &nbsp;·&nbsp; For informational use only</footer>
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-cell"><div class="stat-num purple">{jud_count}</div><div class="stat-lbl">Judgment</div></div>
+  <div class="stat-cell"><div class="stat-num orange">{tax_count}</div><div class="stat-lbl">Tax Lien</div></div>
+  <div class="stat-cell"><div class="stat-num red">{lis_count}</div><div class="stat-lbl">Lis Pendens</div></div>
+  <div class="stat-cell"><div class="stat-num blue">{nod_count}</div><div class="stat-lbl">Notice of Default</div></div>
+  <div class="stat-cell"><div class="stat-num green">{new_count}</div><div class="stat-lbl">New Leads</div></div>
+  <div class="stat-cell"><div class="stat-num accent">{week_count}</div><div class="stat-lbl">This Week</div></div>
+</div>
+
+<!-- FILTER ROW -->
+<div class="filter-row">
+  <input class="search-input" type="text" placeholder="Owner, address, doc #..." oninput="applyFilters()">
+  <select class="type-sel" onchange="applyFilters()">
+    <option value="">All Types</option>
+    <option value="TAX">Tax Lien</option>
+    <option value="JUD">Judgment</option>
+    <option value="LIS">Lis Pendens</option>
+    <option value="NOD">Notice of Default</option>
+    <option value="MECH">Mechanic Lien</option>
+    <option value="PRO">Probate</option>
+  </select>
+  <select class="score-sel" onchange="applyFilters()">
+    <option value="0">Any Score</option>
+    <option value="30">30+</option>
+    <option value="50">50+</option>
+    <option value="70">70+</option>
+  </select>
+  <button class="chip active" data-chip="all" onclick="setChip('all',this)">All</button>
+  <button class="chip" data-chip="LIS" onclick="setChip('LIS',this)">Lis pendens</button>
+  <button class="chip" data-chip="NOD" onclick="setChip('NOD',this)">Pre-foreclosure</button>
+  <button class="chip" data-chip="JUD" onclick="setChip('JUD',this)">Judgment lien</button>
+  <button class="chip" data-chip="TAX" onclick="setChip('TAX',this)">Tax lien</button>
+  <button class="chip" data-chip="MECH" onclick="setChip('MECH',this)">Mechanic lien</button>
+  <button class="chip" data-chip="PRO" onclick="setChip('PRO',this)">Probate / estate</button>
+  <button class="chip new-chip" data-chip="new" onclick="setChip('new',this)">New this week</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="table-pane">
+    <table id="leadsTable">
+      <thead>
+        <tr>
+          <th>Score</th><th>Type</th><th>Code</th><th>Filed</th>
+          <th>Property Owner</th><th>Grantor / Plaintiff</th>
+          <th>Property Address</th><th>Amount</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- DETAIL PANE -->
+  <div class="detail-pane" id="detailPane">
+    <div class="detail-header">
+      <div class="detail-title">Lead Detail</div>
+      <button class="close-btn" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-score">
+      <div class="big-score" id="d-score">—</div>
+      <div class="detail-name" id="d-name">—</div>
+      <div class="detail-sub" id="d-sub">—</div>
+      <div class="detail-chips" id="d-chips"></div>
+    </div>
+    <div class="section-title">Document</div>
+    <div class="detail-row"><span class="detail-key">Doc Number</span><span class="detail-val" id="d-docnum">—</span></div>
+    <div class="detail-row"><span class="detail-key">Type</span><span class="detail-val" id="d-type">—</span></div>
+    <div class="detail-row"><span class="detail-key">Filed</span><span class="detail-val" id="d-filed">—</span></div>
+    <div class="detail-row"><span class="detail-key">Days on Record</span><span class="detail-val" id="d-days">—</span></div>
+    <div class="detail-row"><span class="detail-key">Amount</span><span class="detail-val" id="d-amount">—</span></div>
+    <div class="detail-row"><span class="detail-key">Property Owner</span><span class="detail-val" id="d-owner">—</span></div>
+    <div class="detail-row"><span class="detail-key">Grantor / Plaintiff</span><span class="detail-val" id="d-grantor">—</span></div>
+    <div class="detail-row"><span class="detail-key">Legal Desc</span><span class="detail-val" id="d-legal">—</span></div>
+    <div class="section-title">Property</div>
+    <div class="detail-row"><span class="detail-key">Site Address</span><span class="detail-val" id="d-addr">—</span></div>
+    <div class="section-title">Links</div>
+    <div class="detail-row"><span class="detail-key">Maps</span><span class="detail-val"><a class="detail-link" id="d-maps" href="#" target="_blank">Search in Google Maps →</a></span></div>
+    <div class="section-title">Actions</div>
+    <button class="underwrite-btn" onclick="underwrite()">🏠 UNDERWRITE THIS PROPERTY</button>
+  </div>
+</div>
 
 <script>
-const newDocs = new Set({json.dumps(list(new_lead_doc_numbers))});
-let cf='all';
-function filt(t,b){{cf=t;document.querySelectorAll('.fb').forEach(x=>x.classList.remove('active'));b.classList.add('active');apply(document.querySelector('.sb').value);}}
-function search(q){{apply(q);}}
-function apply(query){{
-  const q=query.toLowerCase();
-  document.querySelectorAll('#tb tr').forEach(row=>{{
-    const s=parseInt(row.dataset.score||0);
-    const t=row.dataset.text||'';
-    const docNum=row.querySelector('.rank')?.textContent||'';
-    const isNew=Array.from(newDocs).some(d=>docNum.includes(d));
-    const mf=cf==='all'||(cf==='hot'&&s>=50)||(cf==='warm'&&s>=25&&s<50)||
-              (cf==='30'&&s>=30)||(cf==='new'&&isNew)||(cf==='cold'&&s<25);
-    row.classList.toggle('hidden',!(mf&&(q===''||t.includes(q))));
+const allRows = {rows_json};
+let activeChip = 'all';
+let selectedIdx = null;
+
+function scoreClass(s){{ return s>=50?'hot':s>=30?'warm':'cold'; }}
+
+function renderTable(rows){{
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = rows.map((r,i) => {{
+    const sc = scoreClass(r.score);
+    const newTag = r.is_new ? '<span class="new-tag">NEW</span>' : '';
+    const weekTag = r.this_week ? '<span class="week-tag">New this week</span>' : '';
+    return `<tr data-idx="${{i}}" onclick="selectRow(${{i}})">
+      <td><div class="sc ${{sc}}">${{r.score}}</div></td>
+      <td><span class="type-badge tb-${{r.code}}">${{r.doc_type.length>18?r.doc_type.slice(0,18)+'…':r.doc_type}}</span></td>
+      <td class="code-cell">${{r.code}}</td>
+      <td class="filed-cell">${{r.filed}}</td>
+      <td class="owner-cell">${{r.grantor}}${{newTag}}</td>
+      <td class="grantor-cell">${{r.grantee||'—'}}</td>
+      <td class="addr-cell">${{r.address||'—'}}${{weekTag}}</td>
+      <td class="amt-cell">—</td>
+    </tr>`;
+  }}).join('');
+}}
+
+function applyFilters(){{
+  const q     = document.querySelector('.search-input').value.toLowerCase();
+  const type  = document.querySelector('.type-sel').value;
+  const score = parseInt(document.querySelector('.score-sel').value)||0;
+  const rows  = document.querySelectorAll('#tbody tr');
+  rows.forEach((row,i) => {{
+    const r = allRows[i];
+    if(!r)return;
+    const matchQ    = !q || (r.grantor+r.grantee+r.address+r.doc_num).toLowerCase().includes(q);
+    const matchType = !type || r.code===type;
+    const matchScore= r.score >= score;
+    const matchChip = activeChip==='all' || activeChip==='new'
+      ? (activeChip==='new' ? r.this_week : true)
+      : r.code===activeChip;
+    row.classList.toggle('hidden', !(matchQ&&matchType&&matchScore&&matchChip));
   }});
 }}
 
-const csvData=`{csv_data}`;
+function setChip(val, btn){{
+  activeChip = val;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}}
+
+function selectRow(idx){{
+  selectedIdx = idx;
+  const r = allRows[idx];
+  document.querySelectorAll('#tbody tr').forEach(tr=>tr.classList.remove('selected'));
+  document.querySelector(`#tbody tr[data-idx="${{idx}}"]`)?.classList.add('selected');
+  
+  // Populate detail pane
+  const sc = scoreClass(r.score);
+  const scoreEl = document.getElementById('d-score');
+  scoreEl.textContent = r.score;
+  scoreEl.style.borderColor = sc==='hot'?'#f5a623':sc==='warm'?'#f97316':'#666';
+  scoreEl.style.color = sc==='hot'?'#f5a623':sc==='warm'?'#f97316':'#666';
+  
+  document.getElementById('d-name').textContent = r.grantor || '—';
+  document.getElementById('d-sub').textContent = r.doc_type + (r.code?' · '+r.code:'');
+  document.getElementById('d-docnum').textContent = r.doc_num || '—';
+  document.getElementById('d-type').textContent = r.doc_type || '—';
+  document.getElementById('d-filed').textContent = r.filed || '—';
+  document.getElementById('d-days').textContent = r.days ? r.days+' days' : '—';
+  document.getElementById('d-amount').textContent = '—';
+  document.getElementById('d-owner').textContent = r.grantor || '—';
+  document.getElementById('d-grantor').textContent = r.grantee || '—';
+  document.getElementById('d-legal').textContent = r.legal || '—';
+  document.getElementById('d-addr').textContent = r.address || '—';
+  
+  const mapsEl = document.getElementById('d-maps');
+  if(r.maps_url){{ mapsEl.href=r.maps_url; mapsEl.style.display=''; }}
+  else{{ mapsEl.style.display='none'; }}
+  
+  // Signal chips
+  const chipsEl = document.getElementById('d-chips');
+  chipsEl.innerHTML = r.signals.map(s=>
+    `<span class="detail-chip type-badge tb-${{r.code}}">${{s}}</span>`
+  ).join('');
+  if(r.is_new) chipsEl.innerHTML += '<span class="detail-chip" style="background:rgba(168,85,247,.2);color:#d8b4fe;border:1px solid rgba(168,85,247,.3);">NEW</span>';
+  if(r.this_week) chipsEl.innerHTML += '<span class="detail-chip" style="background:rgba(245,166,35,.15);color:#f5a623;border:1px solid rgba(245,166,35,.3);">New this week</span>';
+  
+  document.getElementById('detailPane').classList.add('open');
+}}
+
+function closeDetail(){{
+  document.getElementById('detailPane').classList.remove('open');
+  document.querySelectorAll('#tbody tr').forEach(tr=>tr.classList.remove('selected'));
+  selectedIdx = null;
+}}
+
+function underwrite(){{
+  const r = allRows[selectedIdx];
+  if(!r) return;
+  const q = encodeURIComponent((r.grantor||'')+ ' ' +(r.address||'')+ ' San Antonio TX');
+  window.open('https://www.google.com/search?q='+q, '_blank');
+}}
+
 function exportCSV(){{
-  const blob=new Blob([csvData],{{type:'text/csv'}});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='bexar-leads-{today_str}.csv';a.click();
+  const fields = ['score','doc_type','code','filed','days','grantor','grantee','address','legal','doc_num','signals'];
+  const header = fields.join(',');
+  const rows = allRows.map(r => fields.map(f => {{
+    const v = f==='signals' ? r.signals.join('|') : (r[f]||'');
+    return '"'+String(v).replace(/"/g,'""')+'"';
+  }}).join(','));
+  const csv = [header,...rows].join('\\n');
+  const blob = new Blob([csv],{{type:'text/csv'}});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='bexar-leads-{today_str}.csv'; a.click();
   URL.revokeObjectURL(url);
 }}
 
-const markers={markers_json};
-let mapLoaded=false,mapVisible=false;
-function toggleMap(){{
-  const w=document.getElementById('mapWrap');
-  mapVisible=!mapVisible;w.classList.toggle('show',mapVisible);
-  if(mapVisible&&!mapLoaded){{mapLoaded=true;loadMap();}}
-}}
-function loadMap(){{
-  const lc=document.createElement('link');lc.rel='stylesheet';lc.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(lc);
-  const ls=document.createElement('script');ls.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-  ls.onload=function(){{
-    const map=L.map('map').setView([29.4241,-98.4936],11);
-    L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png',{{attribution:'© OpenStreetMap'}}).addTo(map);
-    markers.forEach(m=>{{
-      const color=m.score>=50?'#ef4444':'#f97316';
-      L.circleMarker([m.lat,m.lng],{{radius:m.score>=50?10:7,fillColor:color,color:'#fff',weight:1.5,opacity:1,fillOpacity:0.85}})
-       .addTo(map).bindPopup(`<b>${{m.name}}</b><br><b>${{m.doc_type}}</b><br>Filed: ${{m.date}} (${{m.days}} days ago)<br>Score: <b>${{m.score}}</b><br><a href="${{m.maps_url}}" target="_blank">🔍 Search in Google Maps</a>`);
-    }});
-  }};
-  document.head.appendChild(ls);
-}}
-</script></body></html>"""
+// Initial render
+renderTable(allRows);
+applyFilters();
+</script>
+</body></html>"""
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# MAIN
-# ─────────────────────────────────────────────────────────────────────────────
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
