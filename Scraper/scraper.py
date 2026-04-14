@@ -48,7 +48,7 @@ SLACK_WEBHOOK = os.environ.get("SLACK_WEBHOOK_URL", "")
 # ─────────────────────────────────────────────────────────────────────────────
 SCORE_WEIGHTS = {
     "tax_delinquent": 30, "code_violation": 25,
-    "probate_filing": 20, "multiple_liens": 15, "divorce_bankruptcy": 10,
+    "probate_filing": 20, "multiple_liens": 30, "divorce_bankruptcy": 10,
 }
 DISTRESS_KEYWORDS = {
     "tax_delinquent":     ["tax lien", "federal tax lien", "state tax lien", "delinquent tax", "irs lien", "ftl", "release of ftl"],
