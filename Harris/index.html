@@ -1,0 +1,308 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Harris County Motivated Sellers</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#0e0e0e;--surface:#161616;--border:#2a2a2a;--text:#f0f0f0;--muted:#666;--accent:#f5a623;--purple:#a855f7;--orange:#f97316;--red:#ef4444;--green:#22c55e;--blue:#3b82f6;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.5rem;border-bottom:1px solid var(--border);background:#111;}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.15em;}
+.brand span{color:var(--accent);}
+.updated{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.updated::before{content:'● ';color:var(--green);}
+.db-badge{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.3);}
+.export-btn{background:var(--accent);color:#000;border:none;border-radius:5px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:.4rem 1rem;cursor:pointer;}
+.export-btn:hover{background:#e09510;}
+.hero{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--border);}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,6vw,4rem);line-height:.95;color:var(--accent);letter-spacing:.05em;}
+.hero h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,6vw,4rem);line-height:.95;color:var(--text);letter-spacing:.05em;margin-bottom:.75rem;}
+.hero-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.total-badge{float:right;text-align:right;}
+.total-num{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--accent);line-height:1;}
+.total-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;}
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));border-bottom:1px solid var(--border);}
+.stat-cell{padding:.9rem 1.5rem;border-right:1px solid var(--border);}
+.stat-cell:last-child{border-right:none;}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;}
+.stat-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}
+.purple{color:var(--purple);}.orange{color:var(--orange);}.red{color:var(--red);}.blue{color:var(--blue);}.green{color:var(--green);}.accent{color:var(--accent);}
+.filter-row{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;background:#111;}
+.search-input{background:#1a1a1a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:.4rem .8rem;width:200px;outline:none;}
+.search-input:focus{border-color:var(--accent);}.search-input::placeholder{color:var(--muted);}
+select{background:#1a1a1a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;padding:.4rem .8rem;outline:none;cursor:pointer;}
+.chip{background:#1a1a1a;border:1px solid var(--border);border-radius:20px;color:var(--muted);cursor:pointer;font-size:11px;padding:.3rem .85rem;white-space:nowrap;transition:all .15s;}
+.chip:hover,.chip.active{background:rgba(245,166,35,.12);border-color:var(--accent);color:var(--accent);}
+.chip.new-chip{border-color:var(--purple);color:var(--purple);}
+.chip.new-chip.active{background:rgba(168,85,247,.15);}
+.main{display:flex;flex:1;overflow:hidden;}
+.table-pane{flex:1;overflow:auto;}
+.detail-pane{width:320px;border-left:1px solid var(--border);background:#111;overflow-y:auto;flex-shrink:0;display:none;}
+.detail-pane.open{display:block;}
+table{width:100%;border-collapse:collapse;}
+thead th{background:#111;border-bottom:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;font-weight:500;padding:.6rem 1rem;text-align:left;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;position:sticky;top:0;z-index:10;}
+tbody tr{border-bottom:1px solid #1a1a1a;cursor:pointer;transition:background .1s;}
+tbody tr:hover{background:#1a1a1a;}tbody tr.selected{background:#1f1a0e;border-left:2px solid var(--accent);}tbody tr.hidden{display:none;}
+td{padding:.55rem 1rem;vertical-align:middle;}
+.sc{width:36px;height:36px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;margin:0 auto;}
+.sc.hot{border-color:var(--accent);color:var(--accent);}.sc.warm{border-color:var(--orange);color:var(--orange);}.sc.cold{border-color:var(--muted);color:var(--muted);}
+.type-badge{border-radius:4px;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;padding:3px 8px;white-space:nowrap;display:inline-block;}
+.tb-TAX{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);}
+.tb-JUD{background:rgba(168,85,247,.15);color:#d8b4fe;border:1px solid rgba(168,85,247,.3);}
+.tb-LIS{background:rgba(249,115,22,.15);color:#fdba74;border:1px solid rgba(249,115,22,.3);}
+.tb-NOD{background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.4);}
+.tb-MECH{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3);}
+.tb-OTH,.tb-UCC,.tb-AFF,.tb-DEED,.tb-QCD,.tb-PRO,.tb-DOT{background:rgba(255,255,255,.06);color:#aaa;border:1px solid rgba(255,255,255,.12);}
+.code-cell,.filed-cell,.amt-cell{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;}
+.owner-cell{font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.grantor-cell{color:#aaa;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.addr-cell{color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+.new-tag{display:inline-block;background:rgba(168,85,247,.18);color:#c4b5fd;border:1px solid rgba(168,85,247,.35);border-radius:3px;font-size:9px;font-family:'DM Mono',monospace;padding:1px 5px;margin-left:4px;}
+.week-tag{display:inline-block;background:rgba(245,166,35,.15);color:var(--accent);border:1px solid rgba(245,166,35,.3);border-radius:3px;font-size:9px;font-family:'DM Mono',monospace;padding:1px 5px;margin-left:4px;}
+.detail-header{display:flex;align-items:center;justify-content:space-between;padding:1rem;border-bottom:1px solid var(--border);}
+.detail-title{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;}
+.close-btn:hover{color:var(--text);}
+.detail-score{text-align:center;padding:1.5rem 1rem 1rem;border-bottom:1px solid var(--border);}
+.big-score{width:80px;height:80px;border-radius:50%;border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--accent);margin:0 auto .75rem;}
+.detail-name{font-weight:600;font-size:15px;text-align:center;}
+.detail-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:4px;}
+.detail-chips{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:.75rem;}
+.detail-chip{border-radius:3px;font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;}
+.section-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:.75rem 1rem .4rem;border-top:1px solid var(--border);}
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:.35rem 1rem;gap:1rem;}
+.detail-key{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.detail-val{font-size:12px;text-align:right;word-break:break-word;}
+.detail-link{color:var(--blue);text-decoration:none;font-size:12px;}
+.detail-link:hover{color:#60a5fa;}
+.underwrite-btn{display:block;margin:1rem;background:var(--green);color:#000;border:none;border-radius:6px;padding:.75rem;font-size:13px;font-weight:600;cursor:pointer;text-align:center;width:calc(100% - 2rem);}
+.underwrite-btn:hover{background:#16a34a;color:#fff;}
+</style></head><body>
+
+<div class="topbar">
+  <div class="brand"><span>HARRIS</span>LEADS</div>
+  <div class="updated">Updated 4/14/2026, 7:12:14 AM</div>
+  <div class="db-badge">LIVE DATA</div>
+  <button class="export-btn" onclick="exportCSV()">⬇ EXPORT GHL CSV</button>
+</div>
+
+<div class="hero">
+  <div class="total-badge"><div class="total-num">50</div><div class="total-lbl">Total Leads</div></div>
+  <h1>HARRIS COUNTY</h1>
+  <h2>MOTIVATED SELLERS</h2>
+  <div class="hero-meta">cclerk.hctx.net &nbsp;·&nbsp; 01/01/2024 – 04/14/2026 &nbsp;·&nbsp; Generated 2026-04-14</div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-cell"><div class="stat-num purple">8</div><div class="stat-lbl">Judgment</div></div>
+  <div class="stat-cell"><div class="stat-num orange">12</div><div class="stat-lbl">Tax Lien</div></div>
+  <div class="stat-cell"><div class="stat-num red">6</div><div class="stat-lbl">Lis Pendens</div></div>
+  <div class="stat-cell"><div class="stat-num blue">0</div><div class="stat-lbl">Notice of Default</div></div>
+  <div class="stat-cell"><div class="stat-num green">34</div><div class="stat-lbl">New Leads</div></div>
+  <div class="stat-cell"><div class="stat-num accent">0</div><div class="stat-lbl">This Week</div></div>
+</div>
+
+<div class="filter-row">
+  <input class="search-input" type="text" placeholder="Owner, address, doc #..." oninput="applyFilters()">
+  <select onchange="applyFilters()" id="typeSel">
+    <option value="">All Types</option>
+    <option value="TAX">Tax Lien</option>
+    <option value="JUD">Judgment</option>
+    <option value="LIS">Lis Pendens</option>
+    <option value="NOD">Notice of Default</option>
+    <option value="MECH">Mechanic Lien</option>
+    <option value="PRO">Probate</option>
+  </select>
+  <select onchange="applyFilters()" id="scoreSel">
+    <option value="0">Any Score</option>
+    <option value="30">30+</option>
+    <option value="50">50+</option>
+    <option value="70">70+</option>
+  </select>
+  <button class="chip active" onclick="setChip('all',this)">All</button>
+  <button class="chip" onclick="setChip('LIS',this)">Lis pendens</button>
+  <button class="chip" onclick="setChip('NOD',this)">Pre-foreclosure</button>
+  <button class="chip" onclick="setChip('JUD',this)">Judgment lien</button>
+  <button class="chip" onclick="setChip('TAX',this)">Tax lien</button>
+  <button class="chip" onclick="setChip('MECH',this)">Mechanic lien</button>
+  <button class="chip" onclick="setChip('PRO',this)">Probate / estate</button>
+  <button class="chip new-chip" onclick="setChip('new',this)">New this week</button>
+</div>
+
+<div class="main">
+  <div class="table-pane">
+    <table>
+      <thead><tr>
+        <th>Score</th><th>Type</th><th>Code</th><th>Filed</th>
+        <th>Property Owner</th><th>Grantor / Plaintiff</th>
+        <th>Property Address</th><th>Amount</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="detail-pane" id="detailPane">
+    <div class="detail-header">
+      <div class="detail-title">Lead Detail</div>
+      <button class="close-btn" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-score">
+      <div class="big-score" id="d-score">—</div>
+      <div class="detail-name" id="d-name">—</div>
+      <div class="detail-sub" id="d-sub">—</div>
+      <div class="detail-chips" id="d-chips"></div>
+    </div>
+    <div class="section-title">Document</div>
+    <div class="detail-row"><span class="detail-key">Doc Number</span><span class="detail-val" id="d-docnum">—</span></div>
+    <div class="detail-row"><span class="detail-key">Type</span><span class="detail-val" id="d-type">—</span></div>
+    <div class="detail-row"><span class="detail-key">Filed</span><span class="detail-val" id="d-filed">—</span></div>
+    <div class="detail-row"><span class="detail-key">Days on Record</span><span class="detail-val" id="d-days">—</span></div>
+    <div class="detail-row"><span class="detail-key">Film Code</span><span class="detail-val" id="d-film">—</span></div>
+    <div class="detail-row"><span class="detail-key">Property Owner</span><span class="detail-val" id="d-owner">—</span></div>
+    <div class="detail-row"><span class="detail-key">Grantor / Plaintiff</span><span class="detail-val" id="d-grantor">—</span></div>
+    <div class="detail-row"><span class="detail-key">Legal Desc</span><span class="detail-val" id="d-legal">—</span></div>
+    <div class="section-title">Links</div>
+    <div class="detail-row"><span class="detail-key">Maps</span><span class="detail-val"><a class="detail-link" id="d-maps" href="#" target="_blank">Search in Google Maps →</a></span></div>
+    <div class="section-title">Actions</div>
+    <button class="underwrite-btn" onclick="underwrite()">🏠 UNDERWRITE THIS PROPERTY</button>
+  </div>
+</div>
+
+<script>
+const allRows = [{"score": 75, "doc_type": "STATE TAX LIEN", "code": "TAX", "doc_num": "2024-844140", "filed": "03/29/2025", "days": 381, "grantor": "BROWN JAMES", "grantee": "WELLS FARGO BANK", "address": "3348 Bellaire Blvd, Houston TX 77087", "legal": "Lot 23 Block 3 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=BROWN%20JAMES%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 75, "doc_type": "STATE TAX LIEN", "code": "TAX", "doc_num": "2024-857298", "filed": "12/12/2024", "days": 488, "grantor": "WILLIAMS ELIZABETH", "grantee": "WELLS FARGO BANK", "address": "6692 Richmond Ave, Houston TX 77092", "legal": "Lot 24 Block 3 Richmond Ave Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=WILLIAMS%20ELIZABETH%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 75, "doc_type": "STATE TAX LIEN", "code": "TAX", "doc_num": "2024-857659", "filed": "04/12/2024", "days": 732, "grantor": "GARCIA BARBARA", "grantee": "STATE OF TEXAS", "address": "2293 Richmond Ave, Houston TX 77015", "legal": "Lot 9 Block 5 Richmond Ave Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=GARCIA%20BARBARA%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 75, "doc_type": "STATE TAX LIEN", "code": "TAX", "doc_num": "2024-111922", "filed": "04/25/2024", "days": 719, "grantor": "US BANK NA", "grantee": "WELLS FARGO BANK", "address": "9886 Montrose Blvd, Houston TX 77092", "legal": "Lot 11 Block 15 Bellaire Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=US%20BANK%20NA%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 75, "doc_type": "FEDERAL TAX LIEN", "code": "TAX", "doc_num": "2024-198727", "filed": "04/20/2024", "days": 724, "grantor": "INTERNAL REVENUE SERVICE", "grantee": "MARTINEZ ELIZABETH", "address": "1355 Bellaire Blvd, Houston TX 77075", "legal": "Lot 21 Block 2 Richmond Ave Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=INTERNAL%20REVENUE%20SERVICE%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 75, "doc_type": "STATE TAX LIEN", "code": "TAX", "doc_num": "2024-770126", "filed": "08/17/2024", "days": 605, "grantor": "US BANK NA", "grantee": "JONES BARBARA", "address": "7908 Memorial Dr, Houston TX 77027", "legal": "Lot 25 Block 9 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=US%20BANK%20NA%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 75, "doc_type": "STATE TAX LIEN", "code": "TAX", "doc_num": "2024-650771", "filed": "07/11/2024", "days": 642, "grantor": "QUICKEN LOANS", "grantee": "ANDERSON PATRICIA", "address": "2292 Westheimer Rd, Houston TX 77085", "legal": "Lot 25 Block 1 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 70, "doc_type": "STATE TAX LIEN", "code": "TAX", "doc_num": "2024-971683", "filed": "04/24/2025", "days": 355, "grantor": "MILLER LINDA", "grantee": "US BANK NA", "address": "9657 Memorial Dr, Houston TX 77027", "legal": "Lot 17 Block 4 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=MILLER%20LINDA%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 70, "doc_type": "FEDERAL TAX LIEN", "code": "TAX", "doc_num": "2024-374767", "filed": "09/06/2025", "days": 220, "grantor": "JP MORGAN CHASE", "grantee": "MILLER ROBERT", "address": "6765 Westheimer Rd, Houston TX 77055", "legal": "Lot 2 Block 10 Shepherd Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=JP%20MORGAN%20CHASE%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 70, "doc_type": "FEDERAL TAX LIEN", "code": "TAX", "doc_num": "2024-843587", "filed": "08/03/2025", "days": 254, "grantor": "WILSON PATRICIA", "grantee": "JP MORGAN CHASE", "address": "1235 Richmond Ave, Houston TX 77097", "legal": "Lot 10 Block 4 Shepherd Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=WILSON%20PATRICIA%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 70, "doc_type": "STATE TAX LIEN", "code": "TAX", "doc_num": "2024-547097", "filed": "05/27/2025", "days": 322, "grantor": "QUICKEN LOANS", "grantee": "BROWN ROBERT", "address": "4884 Westheimer Rd, Houston TX 77056", "legal": "Lot 15 Block 12 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 65, "doc_type": "AFFIDAVIT OF HEIRSHIP", "code": "AFF", "doc_num": "2024-639301", "filed": "06/05/2024", "days": 678, "grantor": "US BANK NA", "grantee": "JOHNSON BARBARA", "address": "3894 Shepherd Dr, Houston TX 77045", "legal": "Lot 6 Block 9 Bellaire Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=US%20BANK%20NA%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Probate / estate"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 65, "doc_type": "AFFIDAVIT OF HEIRSHIP", "code": "AFF", "doc_num": "2024-255657", "filed": "06/30/2024", "days": 653, "grantor": "WELLS FARGO BANK", "grantee": "INTERNAL REVENUE SERVICE", "address": "1552 Westheimer Rd, Houston TX 77090", "legal": "Lot 24 Block 9 Bellaire Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=WELLS%20FARGO%20BANK%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Probate / estate"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 65, "doc_type": "AFFIDAVIT OF HEIRSHIP", "code": "AFF", "doc_num": "2024-122430", "filed": "05/21/2024", "days": 693, "grantor": "WELLS FARGO BANK", "grantee": "RODRIGUEZ WILLIAM", "address": "9705 Bellaire Blvd, Houston TX 77028", "legal": "Lot 4 Block 2 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=WELLS%20FARGO%20BANK%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Probate / estate"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 65, "doc_type": "AFFIDAVIT OF HEIRSHIP", "code": "AFF", "doc_num": "2024-833087", "filed": "09/22/2024", "days": 569, "grantor": "INTERNAL REVENUE SERVICE", "grantee": "BROWN ROBERT", "address": "7140 Memorial Dr, Houston TX 77076", "legal": "Lot 11 Block 12 Westheimer Rd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=INTERNAL%20REVENUE%20SERVICE%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Probate / estate"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 60, "doc_type": "STATE TAX LIEN", "code": "TAX", "doc_num": "2024-422997", "filed": "01/22/2026", "days": 82, "grantor": "JOHNSON MICHAEL", "grantee": "US BANK NA", "address": "3230 Bellaire Blvd, Houston TX 77084", "legal": "Lot 21 Block 10 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=JOHNSON%20MICHAEL%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 50, "doc_type": "AFFIDAVIT OF HEIRSHIP", "code": "AFF", "doc_num": "2024-289352", "filed": "02/05/2026", "days": 68, "grantor": "GARCIA DAVID", "grantee": "US BANK NA", "address": "755 Montrose Blvd, Houston TX 77086", "legal": "Lot 4 Block 11 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=GARCIA%20DAVID%2C%20Houston%2C%20TX", "signals": ["Tax lien", "Probate / estate"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 45, "doc_type": "LIS PENDENS", "code": "LIS", "doc_num": "2024-902709", "filed": "08/22/2024", "days": 600, "grantor": "DAVIS MICHAEL", "grantee": "MILLER JAMES", "address": "2390 Richmond Ave, Houston TX 77025", "legal": "Lot 13 Block 15 Bellaire Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=DAVIS%20MICHAEL%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 45, "doc_type": "MECHANIC LIEN", "code": "MECH", "doc_num": "2024-720317", "filed": "01/09/2025", "days": 460, "grantor": "GARCIA DAVID", "grantee": "SMITH WILLIAM", "address": "8398 Westheimer Rd, Houston TX 77025", "legal": "Lot 15 Block 10 Montrose Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=GARCIA%20DAVID%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 45, "doc_type": "JUDGMENT LIEN", "code": "JUD", "doc_num": "2024-106653", "filed": "08/04/2024", "days": 618, "grantor": "QUICKEN LOANS", "grantee": "RODRIGUEZ LINDA", "address": "2579 Bellaire Blvd, Houston TX 77029", "legal": "Lot 8 Block 12 Westheimer Rd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 45, "doc_type": "LIS PENDENS", "code": "LIS", "doc_num": "2024-357031", "filed": "06/11/2024", "days": 672, "grantor": "JONES ROBERT", "grantee": "RODRIGUEZ MARIA", "address": "496 Westheimer Rd, Houston TX 77078", "legal": "Lot 10 Block 7 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=JONES%20ROBERT%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 45, "doc_type": "JUDGMENT LIEN", "code": "JUD", "doc_num": "2024-954000", "filed": "03/15/2024", "days": 760, "grantor": "ANDERSON BARBARA", "grantee": "SMITH BARBARA", "address": "4815 Bellaire Blvd, Houston TX 77023", "legal": "Lot 3 Block 7 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=ANDERSON%20BARBARA%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 45, "doc_type": "JUDGMENT LIEN", "code": "JUD", "doc_num": "2024-163916", "filed": "07/27/2024", "days": 626, "grantor": "INTERNAL REVENUE SERVICE", "grantee": "RODRIGUEZ DAVID", "address": "4675 Memorial Dr, Houston TX 77098", "legal": "Lot 1 Block 4 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=INTERNAL%20REVENUE%20SERVICE%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 45, "doc_type": "LIS PENDENS", "code": "LIS", "doc_num": "2024-210747", "filed": "07/16/2024", "days": 637, "grantor": "STATE OF TEXAS", "grantee": "JOHNSON MARIA", "address": "3317 Westheimer Rd, Houston TX 77042", "legal": "Lot 17 Block 11 Montrose Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=STATE%20OF%20TEXAS%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 40, "doc_type": "LIS PENDENS", "code": "LIS", "doc_num": "2024-564278", "filed": "09/08/2025", "days": 218, "grantor": "US BANK NA", "grantee": "MILLER ELIZABETH", "address": "6301 Memorial Dr, Houston TX 77097", "legal": "Lot 10 Block 7 Montrose Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=US%20BANK%20NA%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 40, "doc_type": "JUDGMENT LIEN", "code": "JUD", "doc_num": "2024-553107", "filed": "10/06/2025", "days": 190, "grantor": "JP MORGAN CHASE", "grantee": "QUICKEN LOANS", "address": "7204 Westheimer Rd, Houston TX 77027", "legal": "Lot 8 Block 2 Montrose Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=JP%20MORGAN%20CHASE%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 40, "doc_type": "JUDGMENT LIEN", "code": "JUD", "doc_num": "2024-366803", "filed": "06/06/2025", "days": 312, "grantor": "WELLS FARGO BANK", "grantee": "RODRIGUEZ ELIZABETH", "address": "5636 Shepherd Dr, Houston TX 77063", "legal": "Lot 20 Block 2 Shepherd Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=WELLS%20FARGO%20BANK%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 40, "doc_type": "LIS PENDENS", "code": "LIS", "doc_num": "2024-683948", "filed": "10/01/2025", "days": 195, "grantor": "JONES PATRICIA", "grantee": "JOHNSON MICHAEL", "address": "9684 Shepherd Dr, Houston TX 77081", "legal": "Lot 21 Block 4 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=JONES%20PATRICIA%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 35, "doc_type": "JUDGMENT LIEN", "code": "JUD", "doc_num": "2024-852128", "filed": "12/08/2025", "days": 127, "grantor": "QUICKEN LOANS", "grantee": "JP MORGAN CHASE", "address": "9127 Shepherd Dr, Houston TX 77062", "legal": "Lot 23 Block 13 Richmond Ave Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 35, "doc_type": "MECHANIC LIEN", "code": "MECH", "doc_num": "2024-178741", "filed": "10/29/2025", "days": 167, "grantor": "STATE OF TEXAS", "grantee": "WELLS FARGO BANK", "address": "6352 Bellaire Blvd, Houston TX 77039", "legal": "Lot 8 Block 13 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=STATE%20OF%20TEXAS%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 35, "doc_type": "JUDGMENT LIEN", "code": "JUD", "doc_num": "2024-702510", "filed": "11/10/2025", "days": 155, "grantor": "QUICKEN LOANS", "grantee": "STATE OF TEXAS", "address": "7527 Bellaire Blvd, Houston TX 77024", "legal": "Lot 22 Block 7 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 30, "doc_type": "LIS PENDENS", "code": "LIS", "doc_num": "2024-541053", "filed": "02/18/2026", "days": 55, "grantor": "JONES BARBARA", "grantee": "JONES MICHAEL", "address": "1377 Westheimer Rd, Houston TX 77091", "legal": "Lot 1 Block 8 Montrose Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=JONES%20BARBARA%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 30, "doc_type": "JUDGMENT LIEN", "code": "JUD", "doc_num": "2024-528333", "filed": "02/13/2026", "days": 60, "grantor": "QUICKEN LOANS", "grantee": "INTERNAL REVENUE SERVICE", "address": "1278 Westheimer Rd, Houston TX 77015", "legal": "Lot 8 Block 13 Bellaire Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 30, "doc_type": "MECHANIC LIEN", "code": "MECH", "doc_num": "2024-966146", "filed": "02/21/2026", "days": 52, "grantor": "QUICKEN LOANS", "grantee": "WELLS FARGO BANK", "address": "7281 Westheimer Rd, Houston TX 77028", "legal": "Lot 15 Block 6 Richmond Ave Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": ["Judgment lien"], "is_new": true, "this_week": false, "film_code": ""}, {"score": 25, "doc_type": "QUITCLAIM DEED", "code": "QCD", "doc_num": "2024-292526", "filed": "02/05/2024", "days": 799, "grantor": "WELLS FARGO BANK", "grantee": "JP MORGAN CHASE", "address": "7926 Kirby Dr, Houston TX 77050", "legal": "Lot 19 Block 4 Shepherd Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=WELLS%20FARGO%20BANK%2C%20Houston%2C%20TX", "signals": ["Lis pendens"], "is_new": false, "this_week": false, "film_code": ""}, {"score": 20, "doc_type": "QUITCLAIM DEED", "code": "QCD", "doc_num": "2024-923462", "filed": "05/28/2025", "days": 321, "grantor": "QUICKEN LOANS", "grantee": "WELLS FARGO BANK", "address": "5202 Shepherd Dr, Houston TX 77018", "legal": "Lot 13 Block 6 Montrose Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": ["Lis pendens"], "is_new": false, "this_week": false, "film_code": ""}, {"score": 15, "doc_type": "DEED OF TRUST", "code": "DOT", "doc_num": "2024-775708", "filed": "04/12/2024", "days": 732, "grantor": "QUICKEN LOANS", "grantee": "US BANK NA", "address": "7697 Richmond Ave, Houston TX 77094", "legal": "Lot 6 Block 15 Montrose Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 15, "doc_type": "DEED OF TRUST", "code": "DOT", "doc_num": "2024-543469", "filed": "03/30/2025", "days": 380, "grantor": "WILLIAMS JAMES", "grantee": "WILLIAMS PATRICIA", "address": "9341 Westheimer Rd, Houston TX 77084", "legal": "Lot 18 Block 2 Westheimer Rd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=WILLIAMS%20JAMES%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 15, "doc_type": "DEED OF TRUST", "code": "DOT", "doc_num": "2024-399179", "filed": "05/20/2024", "days": 694, "grantor": "SMITH DAVID", "grantee": "WILLIAMS DAVID", "address": "6627 Westheimer Rd, Houston TX 77026", "legal": "Lot 16 Block 1 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=SMITH%20DAVID%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 15, "doc_type": "DEED OF TRUST", "code": "DOT", "doc_num": "2024-769387", "filed": "11/03/2024", "days": 527, "grantor": "RODRIGUEZ WILLIAM", "grantee": "INTERNAL REVENUE SERVICE", "address": "9981 Richmond Ave, Houston TX 77059", "legal": "Lot 4 Block 9 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=RODRIGUEZ%20WILLIAM%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 15, "doc_type": "DEED OF TRUST", "code": "DOT", "doc_num": "2024-538805", "filed": "03/03/2024", "days": 772, "grantor": "QUICKEN LOANS", "grantee": "US BANK NA", "address": "7207 Westheimer Rd, Houston TX 77017", "legal": "Lot 14 Block 14 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 10, "doc_type": "QUITCLAIM DEED", "code": "QCD", "doc_num": "2024-138659", "filed": "02/15/2026", "days": 58, "grantor": "JP MORGAN CHASE", "grantee": "RODRIGUEZ LINDA", "address": "6847 Richmond Ave, Houston TX 77080", "legal": "Lot 1 Block 1 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=JP%20MORGAN%20CHASE%2C%20Houston%2C%20TX", "signals": ["Lis pendens"], "is_new": false, "this_week": false, "film_code": ""}, {"score": 5, "doc_type": "DEED", "code": "OTH", "doc_num": "2024-276795", "filed": "10/23/2025", "days": 173, "grantor": "QUICKEN LOANS", "grantee": "DAVIS DAVID", "address": "9358 Bellaire Blvd, Houston TX 77086", "legal": "Lot 2 Block 7 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 5, "doc_type": "DEED OF TRUST", "code": "DOT", "doc_num": "2024-864277", "filed": "12/05/2025", "days": 130, "grantor": "MARTINEZ BARBARA", "grantee": "JONES MICHAEL", "address": "7281 Bellaire Blvd, Houston TX 77029", "legal": "Lot 1 Block 7 Shepherd Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=MARTINEZ%20BARBARA%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 5, "doc_type": "DEED", "code": "OTH", "doc_num": "2024-651577", "filed": "10/26/2025", "days": 170, "grantor": "ANDERSON BARBARA", "grantee": "BROWN DAVID", "address": "7091 Montrose Blvd, Houston TX 77021", "legal": "Lot 22 Block 10 Bellaire Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=ANDERSON%20BARBARA%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 5, "doc_type": "DEED", "code": "OTH", "doc_num": "2024-732108", "filed": "11/23/2025", "days": 142, "grantor": "GARCIA LINDA", "grantee": "SMITH MARIA", "address": "2148 Montrose Blvd, Houston TX 77053", "legal": "Lot 25 Block 8 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=GARCIA%20LINDA%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 0, "doc_type": "DEED OF TRUST", "code": "DOT", "doc_num": "2024-270120", "filed": "01/21/2026", "days": 83, "grantor": "INTERNAL REVENUE SERVICE", "grantee": "WELLS FARGO BANK", "address": "6637 Shepherd Dr, Houston TX 77034", "legal": "Lot 2 Block 13 Kirby Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=INTERNAL%20REVENUE%20SERVICE%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 0, "doc_type": "DEED", "code": "OTH", "doc_num": "2024-190627", "filed": "01/19/2026", "days": 85, "grantor": "MILLER JAMES", "grantee": "JONES DAVID", "address": "1746 Bellaire Blvd, Houston TX 77025", "legal": "Lot 14 Block 10 Bellaire Blvd Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=MILLER%20JAMES%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 0, "doc_type": "DEED OF TRUST", "code": "DOT", "doc_num": "2024-377816", "filed": "01/24/2026", "days": 80, "grantor": "INTERNAL REVENUE SERVICE", "grantee": "SMITH LINDA", "address": "8703 Richmond Ave, Houston TX 77020", "legal": "Lot 18 Block 10 Memorial Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=INTERNAL%20REVENUE%20SERVICE%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}, {"score": 0, "doc_type": "DEED OF TRUST", "code": "DOT", "doc_num": "2024-227416", "filed": "02/17/2026", "days": 56, "grantor": "ANDERSON ROBERT", "grantee": "JOHNSON DAVID", "address": "3624 Memorial Dr, Houston TX 77010", "legal": "Lot 21 Block 4 Shepherd Dr Sub", "maps_url": "https://www.google.com/maps/search/?api=1&query=ANDERSON%20ROBERT%2C%20Houston%2C%20TX", "signals": [], "is_new": false, "this_week": false, "film_code": ""}];
+let activeChip = 'all', selectedIdx = null;
+
+function scoreClass(s){ return s>=50?'hot':s>=30?'warm':'cold'; }
+
+document.getElementById('tbody').innerHTML = allRows.map((r,i) => {
+  const sc = scoreClass(r.score);
+  const newTag = r.is_new ? '<span class="new-tag">NEW</span>' : '';
+  const weekTag = r.this_week ? '<span class="week-tag">New this week</span>' : '';
+  return `<tr data-idx="${i}" onclick="selectRow(${i})">
+    <td><div class="sc ${sc}">${r.score}</div></td>
+    <td><span class="type-badge tb-${r.code}">${r.doc_type.length>18?r.doc_type.slice(0,18)+'…':r.doc_type}</span></td>
+    <td class="code-cell">${r.code}</td>
+    <td class="filed-cell">${r.filed}</td>
+    <td class="owner-cell">${r.grantor}${newTag}</td>
+    <td class="grantor-cell">${r.grantee||'—'}</td>
+    <td class="addr-cell">${r.address||'—'}${weekTag}</td>
+    <td class="amt-cell">—</td>
+  </tr>`;
+}).join('');
+
+function applyFilters(){
+  const q = document.querySelector('.search-input').value.toLowerCase();
+  const type = document.getElementById('typeSel').value;
+  const score = parseInt(document.getElementById('scoreSel').value)||0;
+  document.querySelectorAll('#tbody tr').forEach((row,i) => {
+    const r = allRows[i]; if(!r) return;
+    const matchQ = !q||(r.grantor+r.grantee+r.address+r.doc_num).toLowerCase().includes(q);
+    const matchType = !type||r.code===type;
+    const matchScore = r.score>=score;
+    const matchChip = activeChip==='all'||(activeChip==='new'?r.this_week:r.code===activeChip);
+    row.classList.toggle('hidden',!(matchQ&&matchType&&matchScore&&matchChip));
+  });
+}
+
+function setChip(val,btn){
+  activeChip=val;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function selectRow(idx){
+  selectedIdx=idx; const r=allRows[idx];
+  document.querySelectorAll('#tbody tr').forEach(tr=>tr.classList.remove('selected'));
+  document.querySelector(`#tbody tr[data-idx="${idx}"]`)?.classList.add('selected');
+  const sc=scoreClass(r.score);
+  const scoreEl=document.getElementById('d-score');
+  scoreEl.textContent=r.score;
+  scoreEl.style.borderColor=sc==='hot'?'#f5a623':sc==='warm'?'#f97316':'#666';
+  scoreEl.style.color=sc==='hot'?'#f5a623':sc==='warm'?'#f97316':'#666';
+  document.getElementById('d-name').textContent=r.grantor||'—';
+  document.getElementById('d-sub').textContent=r.doc_type+(r.code?' · '+r.code:'');
+  document.getElementById('d-docnum').textContent=r.doc_num||'—';
+  document.getElementById('d-type').textContent=r.doc_type||'—';
+  document.getElementById('d-filed').textContent=r.filed||'—';
+  document.getElementById('d-days').textContent=r.days?r.days+' days':'—';
+  document.getElementById('d-film').textContent=r.film_code||'—';
+  document.getElementById('d-owner').textContent=r.grantor||'—';
+  document.getElementById('d-grantor').textContent=r.grantee||'—';
+  document.getElementById('d-legal').textContent=r.legal||'—';
+  const mapsEl=document.getElementById('d-maps');
+  if(r.maps_url){mapsEl.href=r.maps_url;mapsEl.style.display='';}
+  else{mapsEl.style.display='none';}
+  document.getElementById('d-chips').innerHTML=r.signals.map(s=>`<span class="detail-chip type-badge tb-${r.code}">${s}</span>`).join('')+(r.is_new?'<span class="detail-chip" style="background:rgba(168,85,247,.2);color:#d8b4fe;border:1px solid rgba(168,85,247,.3);">NEW</span>':'')+(r.this_week?'<span class="detail-chip" style="background:rgba(245,166,35,.15);color:#f5a623;border:1px solid rgba(245,166,35,.3);">New this week</span>':'');
+  document.getElementById('detailPane').classList.add('open');
+}
+
+function closeDetail(){
+  document.getElementById('detailPane').classList.remove('open');
+  document.querySelectorAll('#tbody tr').forEach(tr=>tr.classList.remove('selected'));
+  selectedIdx=null;
+}
+
+function underwrite(){
+  const r=allRows[selectedIdx]; if(!r) return;
+  window.open('https://www.google.com/search?q='+encodeURIComponent((r.grantor||'')+' '+(r.address||'')+' Houston TX'),'_blank');
+}
+
+const csvData=`document_number,file_date,days_on_record,doc_type,grantor,grantee,legal_description,property_address,seller_score,tax_delinquent,code_violation,probate_filing,multiple_liens,divorce_bankruptcy,maps_url,film_code
+2024-844140,03/29/2025,381,STATE TAX LIEN,BROWN JAMES,WELLS FARGO BANK,Lot 23 Block 3 Kirby Dr Sub,"3348 Bellaire Blvd, Houston TX 77087",75,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=BROWN%20JAMES%2C%20Houston%2C%20TX,
+2024-857298,12/12/2024,488,STATE TAX LIEN,WILLIAMS ELIZABETH,WELLS FARGO BANK,Lot 24 Block 3 Richmond Ave Sub,"6692 Richmond Ave, Houston TX 77092",75,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=WILLIAMS%20ELIZABETH%2C%20Houston%2C%20TX,
+2024-857659,04/12/2024,732,STATE TAX LIEN,GARCIA BARBARA,STATE OF TEXAS,Lot 9 Block 5 Richmond Ave Sub,"2293 Richmond Ave, Houston TX 77015",75,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=GARCIA%20BARBARA%2C%20Houston%2C%20TX,
+2024-111922,04/25/2024,719,STATE TAX LIEN,US BANK NA,WELLS FARGO BANK,Lot 11 Block 15 Bellaire Blvd Sub,"9886 Montrose Blvd, Houston TX 77092",75,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=US%20BANK%20NA%2C%20Houston%2C%20TX,
+2024-198727,04/20/2024,724,FEDERAL TAX LIEN,INTERNAL REVENUE SERVICE,MARTINEZ ELIZABETH,Lot 21 Block 2 Richmond Ave Sub,"1355 Bellaire Blvd, Houston TX 77075",75,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=INTERNAL%20REVENUE%20SERVICE%2C%20Houston%2C%20TX,
+2024-770126,08/17/2024,605,STATE TAX LIEN,US BANK NA,JONES BARBARA,Lot 25 Block 9 Memorial Dr Sub,"7908 Memorial Dr, Houston TX 77027",75,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=US%20BANK%20NA%2C%20Houston%2C%20TX,
+2024-650771,07/11/2024,642,STATE TAX LIEN,QUICKEN LOANS,ANDERSON PATRICIA,Lot 25 Block 1 Kirby Dr Sub,"2292 Westheimer Rd, Houston TX 77085",75,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-971683,04/24/2025,355,STATE TAX LIEN,MILLER LINDA,US BANK NA,Lot 17 Block 4 Kirby Dr Sub,"9657 Memorial Dr, Houston TX 77027",70,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=MILLER%20LINDA%2C%20Houston%2C%20TX,
+2024-374767,09/06/2025,220,FEDERAL TAX LIEN,JP MORGAN CHASE,MILLER ROBERT,Lot 2 Block 10 Shepherd Dr Sub,"6765 Westheimer Rd, Houston TX 77055",70,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=JP%20MORGAN%20CHASE%2C%20Houston%2C%20TX,
+2024-843587,08/03/2025,254,FEDERAL TAX LIEN,WILSON PATRICIA,JP MORGAN CHASE,Lot 10 Block 4 Shepherd Dr Sub,"1235 Richmond Ave, Houston TX 77097",70,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=WILSON%20PATRICIA%2C%20Houston%2C%20TX,
+2024-547097,05/27/2025,322,STATE TAX LIEN,QUICKEN LOANS,BROWN ROBERT,Lot 15 Block 12 Kirby Dr Sub,"4884 Westheimer Rd, Houston TX 77056",70,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-639301,06/05/2024,678,AFFIDAVIT OF HEIRSHIP,US BANK NA,JOHNSON BARBARA,Lot 6 Block 9 Bellaire Blvd Sub,"3894 Shepherd Dr, Houston TX 77045",65,True,False,True,False,False,https://www.google.com/maps/search/?api=1&query=US%20BANK%20NA%2C%20Houston%2C%20TX,
+2024-255657,06/30/2024,653,AFFIDAVIT OF HEIRSHIP,WELLS FARGO BANK,INTERNAL REVENUE SERVICE,Lot 24 Block 9 Bellaire Blvd Sub,"1552 Westheimer Rd, Houston TX 77090",65,True,False,True,False,False,https://www.google.com/maps/search/?api=1&query=WELLS%20FARGO%20BANK%2C%20Houston%2C%20TX,
+2024-122430,05/21/2024,693,AFFIDAVIT OF HEIRSHIP,WELLS FARGO BANK,RODRIGUEZ WILLIAM,Lot 4 Block 2 Memorial Dr Sub,"9705 Bellaire Blvd, Houston TX 77028",65,True,False,True,False,False,https://www.google.com/maps/search/?api=1&query=WELLS%20FARGO%20BANK%2C%20Houston%2C%20TX,
+2024-833087,09/22/2024,569,AFFIDAVIT OF HEIRSHIP,INTERNAL REVENUE SERVICE,BROWN ROBERT,Lot 11 Block 12 Westheimer Rd Sub,"7140 Memorial Dr, Houston TX 77076",65,True,False,True,False,False,https://www.google.com/maps/search/?api=1&query=INTERNAL%20REVENUE%20SERVICE%2C%20Houston%2C%20TX,
+2024-422997,01/22/2026,82,STATE TAX LIEN,JOHNSON MICHAEL,US BANK NA,Lot 21 Block 10 Memorial Dr Sub,"3230 Bellaire Blvd, Houston TX 77084",60,True,False,False,True,False,https://www.google.com/maps/search/?api=1&query=JOHNSON%20MICHAEL%2C%20Houston%2C%20TX,
+2024-289352,02/05/2026,68,AFFIDAVIT OF HEIRSHIP,GARCIA DAVID,US BANK NA,Lot 4 Block 11 Kirby Dr Sub,"755 Montrose Blvd, Houston TX 77086",50,True,False,True,False,False,https://www.google.com/maps/search/?api=1&query=GARCIA%20DAVID%2C%20Houston%2C%20TX,
+2024-902709,08/22/2024,600,LIS PENDENS,DAVIS MICHAEL,MILLER JAMES,Lot 13 Block 15 Bellaire Blvd Sub,"2390 Richmond Ave, Houston TX 77025",45,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=DAVIS%20MICHAEL%2C%20Houston%2C%20TX,
+2024-720317,01/09/2025,460,MECHANIC LIEN,GARCIA DAVID,SMITH WILLIAM,Lot 15 Block 10 Montrose Blvd Sub,"8398 Westheimer Rd, Houston TX 77025",45,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=GARCIA%20DAVID%2C%20Houston%2C%20TX,
+2024-106653,08/04/2024,618,JUDGMENT LIEN,QUICKEN LOANS,RODRIGUEZ LINDA,Lot 8 Block 12 Westheimer Rd Sub,"2579 Bellaire Blvd, Houston TX 77029",45,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-357031,06/11/2024,672,LIS PENDENS,JONES ROBERT,RODRIGUEZ MARIA,Lot 10 Block 7 Kirby Dr Sub,"496 Westheimer Rd, Houston TX 77078",45,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=JONES%20ROBERT%2C%20Houston%2C%20TX,
+2024-954000,03/15/2024,760,JUDGMENT LIEN,ANDERSON BARBARA,SMITH BARBARA,Lot 3 Block 7 Kirby Dr Sub,"4815 Bellaire Blvd, Houston TX 77023",45,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=ANDERSON%20BARBARA%2C%20Houston%2C%20TX,
+2024-163916,07/27/2024,626,JUDGMENT LIEN,INTERNAL REVENUE SERVICE,RODRIGUEZ DAVID,Lot 1 Block 4 Memorial Dr Sub,"4675 Memorial Dr, Houston TX 77098",45,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=INTERNAL%20REVENUE%20SERVICE%2C%20Houston%2C%20TX,
+2024-210747,07/16/2024,637,LIS PENDENS,STATE OF TEXAS,JOHNSON MARIA,Lot 17 Block 11 Montrose Blvd Sub,"3317 Westheimer Rd, Houston TX 77042",45,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=STATE%20OF%20TEXAS%2C%20Houston%2C%20TX,
+2024-564278,09/08/2025,218,LIS PENDENS,US BANK NA,MILLER ELIZABETH,Lot 10 Block 7 Montrose Blvd Sub,"6301 Memorial Dr, Houston TX 77097",40,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=US%20BANK%20NA%2C%20Houston%2C%20TX,
+2024-553107,10/06/2025,190,JUDGMENT LIEN,JP MORGAN CHASE,QUICKEN LOANS,Lot 8 Block 2 Montrose Blvd Sub,"7204 Westheimer Rd, Houston TX 77027",40,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=JP%20MORGAN%20CHASE%2C%20Houston%2C%20TX,
+2024-366803,06/06/2025,312,JUDGMENT LIEN,WELLS FARGO BANK,RODRIGUEZ ELIZABETH,Lot 20 Block 2 Shepherd Dr Sub,"5636 Shepherd Dr, Houston TX 77063",40,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=WELLS%20FARGO%20BANK%2C%20Houston%2C%20TX,
+2024-683948,10/01/2025,195,LIS PENDENS,JONES PATRICIA,JOHNSON MICHAEL,Lot 21 Block 4 Kirby Dr Sub,"9684 Shepherd Dr, Houston TX 77081",40,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=JONES%20PATRICIA%2C%20Houston%2C%20TX,
+2024-852128,12/08/2025,127,JUDGMENT LIEN,QUICKEN LOANS,JP MORGAN CHASE,Lot 23 Block 13 Richmond Ave Sub,"9127 Shepherd Dr, Houston TX 77062",35,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-178741,10/29/2025,167,MECHANIC LIEN,STATE OF TEXAS,WELLS FARGO BANK,Lot 8 Block 13 Kirby Dr Sub,"6352 Bellaire Blvd, Houston TX 77039",35,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=STATE%20OF%20TEXAS%2C%20Houston%2C%20TX,
+2024-702510,11/10/2025,155,JUDGMENT LIEN,QUICKEN LOANS,STATE OF TEXAS,Lot 22 Block 7 Memorial Dr Sub,"7527 Bellaire Blvd, Houston TX 77024",35,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-541053,02/18/2026,55,LIS PENDENS,JONES BARBARA,JONES MICHAEL,Lot 1 Block 8 Montrose Blvd Sub,"1377 Westheimer Rd, Houston TX 77091",30,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=JONES%20BARBARA%2C%20Houston%2C%20TX,
+2024-528333,02/13/2026,60,JUDGMENT LIEN,QUICKEN LOANS,INTERNAL REVENUE SERVICE,Lot 8 Block 13 Bellaire Blvd Sub,"1278 Westheimer Rd, Houston TX 77015",30,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-966146,02/21/2026,52,MECHANIC LIEN,QUICKEN LOANS,WELLS FARGO BANK,Lot 15 Block 6 Richmond Ave Sub,"7281 Westheimer Rd, Houston TX 77028",30,False,False,False,True,False,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-292526,02/05/2024,799,QUITCLAIM DEED,WELLS FARGO BANK,JP MORGAN CHASE,Lot 19 Block 4 Shepherd Dr Sub,"7926 Kirby Dr, Houston TX 77050",25,False,False,False,False,True,https://www.google.com/maps/search/?api=1&query=WELLS%20FARGO%20BANK%2C%20Houston%2C%20TX,
+2024-923462,05/28/2025,321,QUITCLAIM DEED,QUICKEN LOANS,WELLS FARGO BANK,Lot 13 Block 6 Montrose Blvd Sub,"5202 Shepherd Dr, Houston TX 77018",20,False,False,False,False,True,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-775708,04/12/2024,732,DEED OF TRUST,QUICKEN LOANS,US BANK NA,Lot 6 Block 15 Montrose Blvd Sub,"7697 Richmond Ave, Houston TX 77094",15,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-543469,03/30/2025,380,DEED OF TRUST,WILLIAMS JAMES,WILLIAMS PATRICIA,Lot 18 Block 2 Westheimer Rd Sub,"9341 Westheimer Rd, Houston TX 77084",15,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=WILLIAMS%20JAMES%2C%20Houston%2C%20TX,
+2024-399179,05/20/2024,694,DEED OF TRUST,SMITH DAVID,WILLIAMS DAVID,Lot 16 Block 1 Memorial Dr Sub,"6627 Westheimer Rd, Houston TX 77026",15,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=SMITH%20DAVID%2C%20Houston%2C%20TX,
+2024-769387,11/03/2024,527,DEED OF TRUST,RODRIGUEZ WILLIAM,INTERNAL REVENUE SERVICE,Lot 4 Block 9 Kirby Dr Sub,"9981 Richmond Ave, Houston TX 77059",15,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=RODRIGUEZ%20WILLIAM%2C%20Houston%2C%20TX,
+2024-538805,03/03/2024,772,DEED OF TRUST,QUICKEN LOANS,US BANK NA,Lot 14 Block 14 Memorial Dr Sub,"7207 Westheimer Rd, Houston TX 77017",15,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-138659,02/15/2026,58,QUITCLAIM DEED,JP MORGAN CHASE,RODRIGUEZ LINDA,Lot 1 Block 1 Memorial Dr Sub,"6847 Richmond Ave, Houston TX 77080",10,False,False,False,False,True,https://www.google.com/maps/search/?api=1&query=JP%20MORGAN%20CHASE%2C%20Houston%2C%20TX,
+2024-276795,10/23/2025,173,DEED,QUICKEN LOANS,DAVIS DAVID,Lot 2 Block 7 Memorial Dr Sub,"9358 Bellaire Blvd, Houston TX 77086",5,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=QUICKEN%20LOANS%2C%20Houston%2C%20TX,
+2024-864277,12/05/2025,130,DEED OF TRUST,MARTINEZ BARBARA,JONES MICHAEL,Lot 1 Block 7 Shepherd Dr Sub,"7281 Bellaire Blvd, Houston TX 77029",5,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=MARTINEZ%20BARBARA%2C%20Houston%2C%20TX,
+2024-651577,10/26/2025,170,DEED,ANDERSON BARBARA,BROWN DAVID,Lot 22 Block 10 Bellaire Blvd Sub,"7091 Montrose Blvd, Houston TX 77021",5,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=ANDERSON%20BARBARA%2C%20Houston%2C%20TX,
+2024-732108,11/23/2025,142,DEED,GARCIA LINDA,SMITH MARIA,Lot 25 Block 8 Memorial Dr Sub,"2148 Montrose Blvd, Houston TX 77053",5,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=GARCIA%20LINDA%2C%20Houston%2C%20TX,
+2024-270120,01/21/2026,83,DEED OF TRUST,INTERNAL REVENUE SERVICE,WELLS FARGO BANK,Lot 2 Block 13 Kirby Dr Sub,"6637 Shepherd Dr, Houston TX 77034",0,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=INTERNAL%20REVENUE%20SERVICE%2C%20Houston%2C%20TX,
+2024-190627,01/19/2026,85,DEED,MILLER JAMES,JONES DAVID,Lot 14 Block 10 Bellaire Blvd Sub,"1746 Bellaire Blvd, Houston TX 77025",0,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=MILLER%20JAMES%2C%20Houston%2C%20TX,
+2024-377816,01/24/2026,80,DEED OF TRUST,INTERNAL REVENUE SERVICE,SMITH LINDA,Lot 18 Block 10 Memorial Dr Sub,"8703 Richmond Ave, Houston TX 77020",0,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=INTERNAL%20REVENUE%20SERVICE%2C%20Houston%2C%20TX,
+2024-227416,02/17/2026,56,DEED OF TRUST,ANDERSON ROBERT,JOHNSON DAVID,Lot 21 Block 4 Shepherd Dr Sub,"3624 Memorial Dr, Houston TX 77010",0,False,False,False,False,False,https://www.google.com/maps/search/?api=1&query=ANDERSON%20ROBERT%2C%20Houston%2C%20TX,
+`;
+function exportCSV(){
+  const blob=new Blob([csvData],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='harris-leads-2026-04-14.csv';a.click();
+  URL.revokeObjectURL(url);
+}
+</script></body></html>
