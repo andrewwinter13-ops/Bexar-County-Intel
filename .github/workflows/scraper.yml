@@ -10,14 +10,32 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install requests beautifulsoup4
-      - run: python Scraper/scraper.py
-      - uses: stefanzweifel/git-auto-commit-action@v5
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Install dependencies
+        run: |
+          pip install selenium webdriver-manager requests beautifulsoup4
+
+      - name: Run scraper
+        run: python Scraper/scraper.py
+
+      - name: Commit results
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Auto-update leads"
           file_pattern: "Scraper/output.json Scraper/index.html"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
