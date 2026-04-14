@@ -454,20 +454,20 @@ def lookup_hcad_addresses(records):
                 time.sleep(3)
 
                 addr = ""
-                for sel in [
-                    "table.resultsTable td:nth-child(2)",
-                    "table tr td:nth-child(2)",
-                    "#resultsTable td",
-                ]:
-                    try:
-                        els = driver.find_elements(By.CSS_SELECTOR, sel)
-                        for el in els:
-                            txt = el.text.strip()
-                            if txt and any(c.isdigit() for c in txt) and len(txt) > 8:
-                                addr = txt.title()
-                                break
-                        if addr: break
-                    except: continue
+                # Save debug HTML on first lookup
+                debug_file = Path("Harris/debug_hcad.html")
+                if not debug_file.exists():
+                    debug_file.write_text(driver.page_source)
+                    log.info("Saved Harris/debug_hcad.html")
+
+                # Scan all tds for anything that looks like a street address
+                all_tds = driver.find_elements(By.TAG_NAME, "td")
+                for td in all_tds:
+                    txt = td.text.strip()
+                    if txt and any(c.isdigit() for c in txt) and 8 < len(txt) < 80:
+                        if any(w in txt.upper() for w in ["ST","AVE","DR","RD","LN","BLVD","WAY","CT","PL","FWY","HWY"]):
+                            addr = txt.title()
+                            break
 
                 if addr:
                     rec.property_address = addr
