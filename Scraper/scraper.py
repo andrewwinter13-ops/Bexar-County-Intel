@@ -312,7 +312,18 @@ def build_dashboard(all_records, new_docs):
     rows = ""
     for i,r in enumerate(all_records):
         nb = '<span class="new-badge">NEW</span>' if r.document_number in new_docs else ""
-        ml = (f'<a href="{r.maps_url}" target="_blank" class="maps-link">Search Maps</a>'
+        # Build appraisal district lookup URL based on county
+        grantor_enc = urllib.parse.quote(r.grantor)
+        if r.county == "Harris":
+            cad_url = f"https://hcad.org/property-search/real-property/real-property-search/?search_type=owner_name&search_term={grantor_enc}"
+            cad_label = "HCAD"
+        else:
+            cad_url = f"https://esearch.bcad.org/?SearchType=o&SearchValue={grantor_enc}"
+            cad_label = "BCAD"
+        ml = (f'<div class="lookup-btns">'
+              f'<a href="{r.maps_url}" target="_blank" class="maps-link">📍 Maps</a>'
+              f'<a href="{cad_url}" target="_blank" class="cad-link">'
+              f'🏠 {cad_label}</a></div>'
               if r.maps_url else "—")
         rows += (f'<tr class="record-row {"hot-row" if r.seller_score>=50 else ""}" '
                  f'data-score="{r.seller_score}" data-county="{r.county}" '
@@ -416,8 +427,11 @@ td{{padding:.6rem .8rem;vertical-align:middle;}}
 .name{{white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;}}
 .days{{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}}
 .hot-age{{color:#ef4444;font-weight:500;}}.warm-age{{color:#f97316;}}
+.lookup-btns{{display:flex;flex-direction:column;gap:3px;}}
 .maps-link{{color:#60a5fa;text-decoration:none;font-size:11px;white-space:nowrap;}}
 .maps-link:hover{{color:#93c5fd;}}
+.cad-link{{color:#86efac;text-decoration:none;font-size:11px;white-space:nowrap;}}
+.cad-link:hover{{color:#4ade80;}}
 .badge{{border-radius:4px;display:inline-block;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;margin:1px;padding:2px 6px;white-space:nowrap;}}
 .badge-active{{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);}}
 footer{{border-top:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;padding:1rem 2rem;text-align:center;}}
