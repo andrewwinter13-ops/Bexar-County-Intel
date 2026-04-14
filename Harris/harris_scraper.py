@@ -576,6 +576,11 @@ td{{padding:.55rem 1rem;vertical-align:middle;}}
 .owner-cell{{font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}
 .grantor-cell{{color:#aaa;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}
 .addr-cell{{color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}}
+.lookup-btns{{display:flex;flex-direction:column;gap:3px;}}
+.maps-link{{color:#60a5fa;text-decoration:none;font-size:11px;white-space:nowrap;}}
+.maps-link:hover{{color:#93c5fd;}}
+.cad-link{{color:#86efac;text-decoration:none;font-size:11px;white-space:nowrap;}}
+.cad-link:hover{{color:#4ade80;}}
 .new-tag{{display:inline-block;background:rgba(168,85,247,.18);color:#c4b5fd;border:1px solid rgba(168,85,247,.35);border-radius:3px;font-size:9px;font-family:'DM Mono',monospace;padding:1px 5px;margin-left:4px;}}
 .week-tag{{display:inline-block;background:rgba(245,166,35,.15);color:var(--accent);border:1px solid rgba(245,166,35,.3);border-radius:3px;font-size:9px;font-family:'DM Mono',monospace;padding:1px 5px;margin-left:4px;}}
 .detail-header{{display:flex;align-items:center;justify-content:space-between;padding:1rem;border-bottom:1px solid var(--border);}}
@@ -654,7 +659,7 @@ td{{padding:.55rem 1rem;vertical-align:middle;}}
       <thead><tr>
         <th>Score</th><th>Type</th><th>Code</th><th>Filed</th>
         <th>Property Owner</th><th>Grantor / Plaintiff</th>
-        <th>Property Address</th><th>Amount</th>
+        <th>Property Address</th><th>Lookup</th><th>Amount</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -704,6 +709,10 @@ document.getElementById('tbody').innerHTML = allRows.map((r,i) => {{
     <td class="owner-cell">${{r.grantor}}${{newTag}}</td>
     <td class="grantor-cell">${{r.grantee||'—'}}</td>
     <td class="addr-cell">${{r.address||'—'}}${{weekTag}}</td>
+    <td><div class="lookup-btns">
+      <a href="${{r.maps_url}}" target="_blank" class="maps-link">📍 Maps</a>
+      <a href="https://hcad.org/property-search/real-property/real-property-search/?search_type=owner_name&search_term=${{encodeURIComponent(r.grantor)}}" target="_blank" class="cad-link">🏠 HCAD</a>
+    </div></td>
     <td class="amt-cell">—</td>
   </tr>`;
 }}).join('');
