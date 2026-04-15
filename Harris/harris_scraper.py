@@ -430,10 +430,14 @@ def scrape_harris_selenium():
 # DEMO DATA
 # ─────────────────────────────────────────────────────────────────────────────
 ADDRESS_LOOKUP_MIN_SCORE = 70
+HARRIS_GIS = "https://www.gis.hctx.net/arcgis/rest/services/HCAD/Parcels/MapServer/0/query"
 
 
 def lookup_hcad_addresses(records):
-    """Look up real property addresses from HCAD for 70+ scored records."""
+    """
+    Query Harris County GIS ArcGIS API for property addresses.
+    No Selenium — pure JSON API calls.
+    """
     targets = [r for r in records
                if r.seller_score >= ADDRESS_LOOKUP_MIN_SCORE
                and not r.property_address]
@@ -442,48 +446,53 @@ def lookup_hcad_addresses(records):
         log.info("No 70+ records need address lookup.")
         return
 
-    log.info(f"Looking up HCAD addresses for {len(targets)} records...")
-    driver = make_driver()
+    log.info(f"Harris GIS address lookup for {len(targets)} records scoring 70+...")
+    import requests as req_module
+    session = req_module.Session()
+    session.headers.update({"User-Agent": "Mozilla/5.0"})
+    found = 0
 
-    try:
-        for i, rec in enumerate(targets):
-            try:
-                name_enc = urllib.parse.quote_plus(rec.grantor)
-                url = f"https://public.hcad.org/records/details.asp?searchtype=ownername&searchterm={name_enc}"
-                driver.get(url)
-                time.sleep(3)
+    for i, rec in enumerate(targets):
+        try:
+            name = rec.grantor.strip().upper()
+            last = name.split(",")[0].strip() if "," in name else name.split()[0].strip()
+            last = last.replace("'", "''")
+            params = {
+                "where": f"owner_name_1 LIKE '{last}%'",
+                "outFields": "owner_name_1,site_addr_1,site_addr_2,site_addr_3",
+                "returnGeometry": "false",
+                "f": "json",
+                "resultRecordCount": 10,
+            }
+            resp = session.get(HARRIS_GIS, params=params, timeout=10)
+            data = resp.json()
+            addr = ""
+            for feat in data.get("features", []):
+                attrs = feat.get("attributes", {})
+                owner = (attrs.get("owner_name_1") or "").upper()
+                name_parts = [p for p in name.split() if len(p) > 2]
+                if any(p in owner for p in name_parts[:2]):
+                    parts = [attrs.get("site_addr_1",""), attrs.get("site_addr_2",""), attrs.get("site_addr_3","")]
+                    addr = " ".join(p for p in parts if p).strip()
+                    if addr and len(addr) > 5:
+                        addr = addr.title()
+                        break
 
-                addr = ""
-                # Save debug HTML on first lookup
-                debug_file = Path("Harris/debug_hcad.html")
-                if not debug_file.exists():
-                    debug_file.write_text(driver.page_source)
-                    log.info("Saved Harris/debug_hcad.html")
+            if addr:
+                rec.property_address = addr
+                q = urllib.parse.quote(f"{addr}, Houston, TX")
+                rec.maps_url = f"https://www.google.com/maps/search/?api=1&query={q}"
+                found += 1
+                log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → {addr}")
+            else:
+                log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → not found")
 
-                # Scan all tds for anything that looks like a street address
-                all_tds = driver.find_elements(By.TAG_NAME, "td")
-                for td in all_tds:
-                    txt = td.text.strip()
-                    if txt and any(c.isdigit() for c in txt) and 8 < len(txt) < 80:
-                        if any(w in txt.upper() for w in ["ST","AVE","DR","RD","LN","BLVD","WAY","CT","PL","FWY","HWY"]):
-                            addr = txt.title()
-                            break
+            time.sleep(0.5)
 
-                if addr:
-                    rec.property_address = addr
-                    q = urllib.parse.quote(addr + ", Houston, TX")
-                    rec.maps_url = f"https://www.google.com/maps/search/?api=1&query={q}"
-                    log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → {addr}")
-                else:
-                    log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → not found")
+        except Exception as e:
+            log.debug(f"Harris GIS error {rec.grantor}: {e}")
 
-                time.sleep(1.5)
-            except Exception as e:
-                log.debug(f"HCAD lookup error: {e}")
-                continue
-    finally:
-        driver.quit()
-
+    log.info(f"Harris GIS lookup complete: {found}/{len(targets)} found")
 
 def generate_demo_records(n=50):
     firstnames = ["James","Maria","Robert","Linda","Michael","Patricia","William","Barbara","David","Elizabeth"]
