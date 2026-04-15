@@ -30,9 +30,9 @@ DASHBOARD_URL = "https://andrewwinter13-ops.github.io/Bexar-County-Intel/Harris/
 DATE_FROM = "01/01/2024"
 DATE_TO   = datetime.utcnow().strftime("%m/%d/%Y")
 
-MAX_PAGES        = 20
-PAGE_LOAD_WAIT   = 20
-BETWEEN_PAGES    = 3
+MAX_PAGES        = 10
+PAGE_LOAD_WAIT   = 10
+BETWEEN_PAGES    = 1.5
 NOTIFY_MIN_SCORE = 30
 
 OUTPUT_DIR     = Path("Harris")
