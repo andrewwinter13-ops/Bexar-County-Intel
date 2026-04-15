@@ -251,69 +251,120 @@ def scrape_county(url, county, city):
 
 
 # ─── DEMO DATA ───────────────────────────────────────────────────────────────
-ADDRESS_LOOKUP_MIN_SCORE = 70  # Only look up addresses for records scoring 70+
+ADDRESS_LOOKUP_MIN_SCORE = 70
 
-# GIS API endpoints — no Selenium needed, pure JSON
+# GIS API endpoints
 BEXAR_GIS  = "https://maps.bexar.org/arcgis/rest/services/Parcels/MapServer/0/query"
 HARRIS_GIS = "https://www.gis.hctx.net/arcgis/rest/services/HCAD/Parcels/MapServer/0/query"
 
 
-def gis_lookup_bexar(session, grantor: str) -> str:
-    """Query Bexar County GIS ArcGIS API for property address by owner name."""
+import re
+
+def parse_lot_block(legal_desc: str):
+    """
+    Extract lot and block numbers from a legal description.
+    Handles formats like:
+      'Lot 5 Block 12 ...'
+      'Subdivision: Name ..., Lot: 5 B... 12'
+      'LOT 47 BLK 3 ...'
+      'LT 5 BK 12 ...'
+    Returns (lot, block) as strings or (None, None).
+    """
+    legal = legal_desc.upper()
+
+    # Try: LOT 5 BLOCK 12 or LOT 5 BLK 12 or LT 5 BK 12
+    lot_match = re.search(r'\bLO?T[:\s]+(\d+[A-Z]?)', legal)
+    blk_match = re.search(r'\bBL?O?C?K?[:\s]+(\d+[A-Z]?)', legal)
+
+    lot = lot_match.group(1) if lot_match else None
+    blk = blk_match.group(1) if blk_match else None
+
+    return lot, blk
+
+
+def gis_lookup_bexar(session, legal_desc: str) -> str:
+    """
+    Query Bexar County GIS API using Lot/Block from legal description.
+    Falls back to a broader search if no lot/block found.
+    """
     try:
-        name = grantor.strip().upper()
-        last = name.split(",")[0].strip() if "," in name else name.split()[0].strip()
-        # Escape single quotes in name
-        last = last.replace("'", "''")
+        lot, blk = parse_lot_block(legal_desc)
+        if not lot or not blk:
+            log.debug(f"  No lot/block in: {legal_desc[:60]}")
+            return ""
+
+        # Query GIS by lot and block
+        where = f"Lot = '{lot}' AND Block = '{blk}'"
         params = {
-            "where": f"Owner LIKE '{last}%'",
-            "outFields": "Owner,Situs",
+            "where": where,
+            "outFields": "Lot,Block,Situs,Owner",
             "returnGeometry": "false",
             "f": "json",
-            "resultRecordCount": 10,
+            "resultRecordCount": 5,
         }
         resp = session.get(BEXAR_GIS, params=params, timeout=10)
         data = resp.json()
-        for feat in data.get("features", []):
-            attrs = feat.get("attributes", {})
-            owner = (attrs.get("Owner") or "").upper()
-            # Verify name match
-            name_parts = [p for p in name.split() if len(p) > 2]
-            if any(p in owner for p in name_parts[:2]):
-                addr = (attrs.get("Situs") or "").strip()
-                if addr and len(addr) > 5:
-                    log.info(f"  BEXAR GIS match: {owner} → {addr}")
-                    return addr.title()
+
+        # Log any errors from API
+        if "error" in data:
+            log.debug(f"  Bexar GIS API error: {data['error']}")
+            # Try alternate field names
+            where2 = f"LotNum = '{lot}' AND BlockNum = '{blk}'"
+            params["where"] = where2
+            resp = session.get(BEXAR_GIS, params=params, timeout=10)
+            data = resp.json()
+
+        features = data.get("features", [])
+        if features:
+            attrs = features[0].get("attributes", {})
+            addr = (attrs.get("Situs") or "").strip()
+            if addr and len(addr) > 5:
+                log.info(f"  Bexar GIS: Lot {lot} Blk {blk} → {addr}")
+                return addr.title()
+
     except Exception as e:
         log.debug(f"Bexar GIS error: {e}")
     return ""
 
 
-def gis_lookup_harris(session, grantor: str) -> str:
-    """Query Harris County GIS ArcGIS API for property address by owner name."""
+def gis_lookup_harris(session, legal_desc: str) -> str:
+    """
+    Query Harris County GIS API using Lot/Block from legal description.
+    """
     try:
-        name = grantor.strip().upper()
-        last = name.split(",")[0].strip() if "," in name else name.split()[0].strip()
-        last = last.replace("'", "''")
+        lot, blk = parse_lot_block(legal_desc)
+        if not lot or not blk:
+            log.debug(f"  No lot/block in: {legal_desc[:60]}")
+            return ""
+
+        where = f"lot = '{lot}' AND block = '{blk}'"
         params = {
-            "where": f"owner_name_1 LIKE '{last}%'",
-            "outFields": "owner_name_1,site_addr_1,site_addr_2,site_addr_3",
+            "where": where,
+            "outFields": "lot,block,site_addr_1,site_addr_2,site_addr_3,owner_name_1",
             "returnGeometry": "false",
             "f": "json",
-            "resultRecordCount": 10,
+            "resultRecordCount": 5,
         }
         resp = session.get(HARRIS_GIS, params=params, timeout=10)
         data = resp.json()
-        for feat in data.get("features", []):
-            attrs = feat.get("attributes", {})
-            owner = (attrs.get("owner_name_1") or "").upper()
-            name_parts = [p for p in name.split() if len(p) > 2]
-            if any(p in owner for p in name_parts[:2]):
-                parts = [attrs.get("site_addr_1",""), attrs.get("site_addr_2",""), attrs.get("site_addr_3","")]
-                addr = " ".join(p for p in parts if p).strip()
-                if addr and len(addr) > 5:
-                    log.info(f"  HARRIS GIS match: {owner} → {addr}")
-                    return addr.title()
+
+        if "error" in data:
+            log.debug(f"  Harris GIS API error: {data['error']}")
+            return ""
+
+        features = data.get("features", [])
+        if features:
+            attrs = features[0].get("attributes", {})
+            parts = [
+                attrs.get("site_addr_1", ""),
+                attrs.get("site_addr_2", ""),
+                attrs.get("site_addr_3", ""),
+            ]
+            addr = " ".join(p for p in parts if p).strip()
+            if addr and len(addr) > 5:
+                log.info(f"  Harris GIS: Lot {lot} Blk {blk} → {addr}")
+                return addr.title()
+
     except Exception as e:
         log.debug(f"Harris GIS error: {e}")
     return ""
@@ -321,13 +372,14 @@ def gis_lookup_harris(session, grantor: str) -> str:
 
 def lookup_addresses(records):
     """
-    For records scoring 70+, query county GIS APIs for real property addresses.
-    No Selenium needed — uses ArcGIS REST JSON APIs directly.
-    Updates rec.property_address and rec.maps_url in place.
+    For records scoring 70+, parse the legal description for Lot/Block,
+    then query the county GIS API for the real property address.
+    No Selenium needed — pure JSON API calls.
     """
     targets = [r for r in records
                if r.seller_score >= ADDRESS_LOOKUP_MIN_SCORE
-               and not r.property_address]
+               and not r.property_address
+               and r.legal_description]
 
     if not targets:
         log.info("No 70+ records need address lookup.")
@@ -341,10 +393,10 @@ def lookup_addresses(records):
     for i, rec in enumerate(targets):
         try:
             if rec.county == "Harris":
-                addr = gis_lookup_harris(session, rec.grantor)
+                addr = gis_lookup_harris(session, rec.legal_description)
                 city = "Houston"
             else:
-                addr = gis_lookup_bexar(session, rec.grantor)
+                addr = gis_lookup_bexar(session, rec.legal_description)
                 city = "San Antonio"
 
             if addr:
@@ -356,13 +408,16 @@ def lookup_addresses(records):
             else:
                 log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → not found")
 
-            time.sleep(0.5)
+            time.sleep(0.3)
 
         except Exception as e:
             log.debug(f"Lookup error {rec.grantor}: {e}")
 
     log.info(f"GIS lookup complete: {found}/{len(targets)} addresses found")
 
+def demo(n=50, county="Bexar", city="San Antonio"):
+    fnames = ["James","Maria","Robert","Linda","Michael","Patricia","William","Barbara","David","Elizabeth"]
+    lnames = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Wilson","Anderson","Rodriguez","Martinez"]
     cos    = ["INTERNAL REVENUE SERVICE","STATE OF TEXAS","GOODLEAP LLC","INDEPENDENT BANK","RCN CAPITAL LLC"]
     dtypes = [("DEED OF TRUST",False),("FEDERAL TAX LIEN",True),("STATE TAX LIEN",True),
               ("JUDGMENT LIEN",True),("DEED",False),("AFFIDAVIT",True),("RELEASE OF FTL",True)]
@@ -375,20 +430,22 @@ def lookup_addresses(records):
         dt,_ = random.choice(dtypes)
         days  = random.randint(30,800)
         fd    = date.fromordinal(date.today().toordinal()-days).strftime("%m/%d/%Y")
+        lot   = str(random.randint(1,25))
+        blk   = str(random.randint(1,15))
         rec   = PropertyRecord(
             document_number=f"2024{random.randint(10000000,99999999)}",
             file_date=fd,grantor=g,grantee=ge,doc_type=dt,county=county,
-            legal_description=f"Lot {random.randint(1,25)} Block {random.randint(1,15)}",
+            legal_description=f"Lot {lot} Block {blk} Subdivision",
             source_url=SEARCH_URL,days_on_record=days,maps_url=make_maps_url(g,city))
         score_record(rec); recs.append(rec)
+    recs.sort(key=lambda r:r.seller_score,reverse=True)
     return recs
 
 
-# ─── CSV ─────────────────────────────────────────────────────────────────────
 def to_csv(records):
     buf = io.StringIO()
     fields = ["county","document_number","file_date","days_on_record","doc_type","grantor","grantee",
-              "legal_description","seller_score","tax_delinquent","code_violation",
+              "legal_description","property_address","seller_score","tax_delinquent","code_violation",
               "probate_filing","multiple_liens","divorce_bankruptcy","maps_url"]
     w = csv.DictWriter(buf, fieldnames=fields, extrasaction="ignore")
     w.writeheader()
@@ -396,7 +453,6 @@ def to_csv(records):
     return buf.getvalue()
 
 
-# ─── COMBINED DASHBOARD ───────────────────────────────────────────────────────
 def build_dashboard(all_records, new_docs):
     def sc(s): return "#ef4444" if s>=50 else "#f97316" if s>=25 else "#22c55e"
     def sl(s): return "HOT" if s>=50 else "WARM" if s>=25 else "COLD"
@@ -414,14 +470,12 @@ def build_dashboard(all_records, new_docs):
         if r.divorce_bankruptcy: s.append("Divorce/BK")
         return " ".join(f'<span class="badge badge-active">{x}</span>' for x in s) or "—"
     def county_badge(county):
-        if county=="Bexar":
-            return '<span class="county-badge bexar">Bexar</span>'
+        if county=="Bexar": return '<span class="county-badge bexar">Bexar</span>'
         return '<span class="county-badge harris">Harris</span>'
 
     rows = ""
     for i,r in enumerate(all_records):
         nb = '<span class="new-badge">NEW</span>' if r.document_number in new_docs else ""
-        # Build appraisal district lookup URL based on county
         grantor_enc = urllib.parse.quote_plus(r.grantor)
         if r.county == "Harris":
             cad_url = f"https://public.hcad.org/records/details.asp?searchtype=ownername&searchterm={grantor_enc}"
@@ -429,14 +483,13 @@ def build_dashboard(all_records, new_docs):
         else:
             cad_url = f"https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110&searchtype=o&searchterm={grantor_enc}"
             cad_label = "BCAD"
-        ml = (f'<div class="lookup-btns">'
-              f'<a href="{r.maps_url}" target="_blank" class="maps-link">📍 Maps</a>'
-              f'<a href="{cad_url}" target="_blank" class="cad-link">'
-              f'🏠 {cad_label}</a></div>'
-              if r.maps_url else "—")
+        maps_btn = (f'<a href="{r.maps_url}" target="_blank" class="maps-link">📍 Maps</a>' if r.maps_url else "")
+        cad_btn  = f'<a href="{cad_url}" target="_blank" class="cad-link">🏠 {cad_label}</a>'
+        ml = f'<div class="lookup-btns">{maps_btn}{cad_btn}</div>'
+        addr_display = r.property_address if r.property_address else (r.legal_description[:35]+"…" if len(r.legal_description)>35 else r.legal_description)
         rows += (f'<tr class="record-row {"hot-row" if r.seller_score>=50 else ""}" '
                  f'data-score="{r.seller_score}" data-county="{r.county}" '
-                 f'data-text="{(r.grantor+r.grantee+r.doc_type+r.county).lower().replace(chr(34),"")}"> '
+                 f'data-text="{(r.grantor+r.grantee+r.doc_type+r.county+(r.property_address or "")).lower().replace(chr(34),"")}"> '
                  f'<td class="rank">#{i+1}{nb}</td>'
                  f'<td>{county_badge(r.county)}</td>'
                  f'<td><div class="score-circle" style="--c:{sc(r.seller_score)}">{r.seller_score}</div>'
@@ -447,7 +500,7 @@ def build_dashboard(all_records, new_docs):
                  f'<td class="nowrap bold">{r.doc_type}</td>'
                  f'<td class="name" title="{r.grantor}">{r.grantor}</td>'
                  f'<td class="name" title="{r.grantee}">{r.grantee}</td>'
-                 f'<td class="mono sm">{r.legal_description[:35]}{"…" if len(r.legal_description)>35 else ""}</td>'
+                 f'<td class="address-cell" title="{addr_display}">{addr_display}</td>'
                  f'<td>{ml}</td>'
                  f'<td>{sigs(r)}</td></tr>')
 
@@ -464,6 +517,7 @@ def build_dashboard(all_records, new_docs):
     dnote   = "LIVE DATA" if live else "DEMO DATA"
     csv_d   = to_csv(all_records).replace("\\","\\\\").replace("`","'")
     today   = datetime.utcnow().strftime("%Y-%m-%d")
+    addrs   = sum(1 for r in all_records if r.property_address)
 
     import random as _r; _r.seed(42)
     map_data = []
@@ -474,13 +528,13 @@ def build_dashboard(all_records, new_docs):
             lat=round(29.6+_r.uniform(0,.35),5); lng=round(-95.65+_r.uniform(0,.45),5)
         map_data.append({"name":r.grantor,"score":r.seller_score,"doc_type":r.doc_type,
                          "date":r.file_date,"days":r.days_on_record,"maps_url":r.maps_url,
-                         "county":r.county,"lat":lat,"lng":lng})
+                         "county":r.county,"address":r.property_address or "","lat":lat,"lng":lng})
     mj = json.dumps(map_data)
     nd = json.dumps(list(new_docs))
 
     return f"""<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>TX Motivated Seller Leads — Bexar & Harris</title>
+<title>TX Motivated Seller Leads</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{{--bg:#0b0d12;--surface:#13161f;--border:#1e2233;--text:#e2e8f0;--muted:#64748b;--accent:#6366f1;}}
@@ -491,14 +545,14 @@ header{{background:linear-gradient(135deg,#0f1117,#13161f);border-bottom:1px sol
 .eyebrow{{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;}}
 h1{{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;background:linear-gradient(135deg,#e2e8f0 30%,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}}
 .sub{{font-size:12px;color:var(--muted);margin-top:.2rem;font-family:'DM Mono',monospace;}}
+.county-split{{display:flex;gap:1.5rem;margin-top:.4rem;flex-wrap:wrap;}}
+.county-stat{{font-family:'DM Mono',monospace;font-size:11px;}}
+.bexar-dot{{color:#6366f1;}}.harris-dot{{color:#f97316;}}
 .db{{display:inline-block;font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;margin-top:5px;
   background:{"rgba(34,197,94,.15)" if live else "rgba(234,179,8,.15)"};
   color:{"#86efac" if live else "#fde047"};
   border:1px solid {"rgba(34,197,94,.3)" if live else "rgba(234,179,8,.3)"};}}
-.county-split{{display:flex;gap:1.5rem;margin-top:.5rem;flex-wrap:wrap;}}
-.county-stat{{font-family:'DM Mono',monospace;font-size:11px;}}
-.county-stat .cn{{font-weight:500;}}
-.bexar-dot{{color:#6366f1;}}.harris-dot{{color:#f97316;}}
+.addr-badge{{display:inline-block;font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;margin-top:5px;margin-left:6px;background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3);}}
 .stats{{display:flex;gap:.75rem;flex-wrap:wrap;}}
 .sc{{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:.75rem 1.2rem;min-width:90px;text-align:center;}}
 .sc .n{{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;line-height:1;}}
@@ -534,6 +588,7 @@ td{{padding:.6rem .8rem;vertical-align:middle;}}
 .slbl{{text-align:center;font-size:9px;font-family:'DM Mono',monospace;}}
 .mono{{font-family:'DM Mono',monospace;color:var(--muted);}}.sm{{font-size:11px;}}.nowrap{{white-space:nowrap;}}.bold{{font-weight:500;}}
 .name{{white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;}}
+.address-cell{{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#94a3b8;}}
 .days{{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}}
 .hot-age{{color:#ef4444;font-weight:500;}}.warm-age{{color:#f97316;}}
 .lookup-btns{{display:flex;flex-direction:column;gap:3px;}}
@@ -551,10 +606,11 @@ footer{{border-top:1px solid var(--border);color:var(--muted);font-family:'DM Mo
     <h1>Texas Multi-County Lead Dashboard</h1>
     <div class="sub">Generated {gen} &nbsp;·&nbsp; {total} total records</div>
     <div class="county-split">
-      <div class="county-stat"><span class="bexar-dot">●</span> <span class="cn">Bexar County</span> — {len(bexar)} records</div>
-      <div class="county-stat"><span class="harris-dot">●</span> <span class="cn">Harris County</span> — {len(harris)} records</div>
+      <div class="county-stat"><span class="bexar-dot">●</span> Bexar County — {len(bexar)} records</div>
+      <div class="county-stat"><span class="harris-dot">●</span> Harris County — {len(harris)} records</div>
     </div>
     <div class="db">{dnote}</div>
+    <div class="addr-badge">🏠 {addrs} addresses resolved</div>
   </div>
   <div class="stats">
     <div class="sc"><div class="n nh">{hot}</div><div class="l">Hot 50+</div></div>
@@ -565,7 +621,6 @@ footer{{border-top:1px solid var(--border);color:var(--muted);font-family:'DM Mo
     <div class="sc"><div class="n na">{avg}</div><div class="l">Avg Score</div></div>
   </div>
 </div></header>
-
 <div class="toolbar">
   <button class="fb active" onclick="filt('all',this)">All</button>
   <button class="fb bexar-btn" onclick="filtCounty('Bexar',this)">● Bexar</button>
@@ -575,48 +630,32 @@ footer{{border-top:1px solid var(--border);color:var(--muted);font-family:'DM Mo
   <button class="fb" onclick="filt('30',this)">⭐ Score 30+</button>
   <button class="fb" onclick="filt('new',this)">🆕 New Today</button>
   <button class="fb" onclick="filt('cold',this)">✓ Cold</button>
-  <input class="sb" type="text" placeholder="Search name, doc type..." oninput="apply(this.value)">
+  <input class="sb" type="text" placeholder="Search name, address..." oninput="apply(this.value)">
   <button class="map-btn" onclick="toggleMap()">🗺️ Leads Map</button>
   <button class="exp-btn" onclick="exportCSV()">⬇ Export CSV</button>
 </div>
-
 <div class="map-wrap" id="mapWrap">
   <div class="map-note">
-    <span style="color:#a5b4fc">● Bexar County</span> &nbsp;·&nbsp;
-    <span style="color:#fdba74">● Harris County</span> &nbsp;·&nbsp;
+    <span style="color:#a5b4fc">● Bexar</span> &nbsp;·&nbsp;
+    <span style="color:#fdba74">● Harris</span> &nbsp;·&nbsp;
     Warm + hot leads · Click any pin for details
   </div>
   <div id="map"></div>
 </div>
-
 <div class="tw"><table>
   <thead><tr>
     <th>#</th><th>County</th><th>Score</th><th>Doc #</th><th>Filed</th><th>Age</th>
     <th>Doc Type</th><th>Grantor (Seller)</th><th>Grantee (Buyer)</th>
-    <th>Legal</th><th>Maps</th><th>Signals</th>
+    <th>Property Address</th><th>Lookup</th><th>Signals</th>
   </tr></thead>
   <tbody id="tb">{rows}</tbody>
 </table></div>
-<footer>Bexar County · bexar.tx.publicsearch.us &nbsp;|&nbsp; Harris County · cclerk.hctx.net &nbsp;·&nbsp; For informational use only</footer>
-
+<footer>Bexar · bexar.tx.publicsearch.us &nbsp;|&nbsp; Harris · cclerk.hctx.net &nbsp;·&nbsp; For informational use only</footer>
 <script>
 const newDocs=new Set({nd});
 let cf='all', cc='all';
-
-function filt(t,b){{
-  cf=t; cc='all';
-  document.querySelectorAll('.fb').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');
-  apply(document.querySelector('.sb').value);
-}}
-
-function filtCounty(county,b){{
-  cc=county; cf='all';
-  document.querySelectorAll('.fb').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');
-  apply(document.querySelector('.sb').value);
-}}
-
+function filt(t,b){{cf=t;cc='all';document.querySelectorAll('.fb').forEach(x=>x.classList.remove('active'));b.classList.add('active');apply(document.querySelector('.sb').value);}}
+function filtCounty(county,b){{cc=county;cf='all';document.querySelectorAll('.fb').forEach(x=>x.classList.remove('active'));b.classList.add('active');apply(document.querySelector('.sb').value);}}
 function apply(query){{
   const q=query.toLowerCase();
   document.querySelectorAll('#tb tr').forEach(row=>{{
@@ -625,13 +664,12 @@ function apply(query){{
     const co=row.dataset.county||'';
     const rk=row.querySelector('.rank')?.textContent||'';
     const isNew=Array.from(newDocs).some(d=>rk.includes(d));
-    const matchCounty = cc==='all' || co===cc;
-    const matchFilter = cf==='all'||(cf==='hot'&&s>=50)||(cf==='warm'&&s>=25&&s<50)||
-                        (cf==='30'&&s>=30)||(cf==='new'&&isNew)||(cf==='cold'&&s<25);
+    const matchCounty=cc==='all'||co===cc;
+    const matchFilter=cf==='all'||(cf==='hot'&&s>=50)||(cf==='warm'&&s>=25&&s<50)||
+                      (cf==='30'&&s>=30)||(cf==='new'&&isNew)||(cf==='cold'&&s<25);
     row.classList.toggle('hidden',!(matchCounty&&matchFilter&&(q===''||t.includes(q))));
   }});
 }}
-
 const csvData=`{csv_d}`;
 function exportCSV(){{
   const blob=new Blob([csvData],{{type:'text/csv'}});
@@ -640,7 +678,6 @@ function exportCSV(){{
   a.href=url;a.download='tx-leads-{today}.csv';a.click();
   URL.revokeObjectURL(url);
 }}
-
 const markers={mj};
 let mapLoaded=false,mapVisible=false;
 function toggleMap(){{
@@ -658,14 +695,27 @@ function loadMap(){{
       const isBexar=m.county==='Bexar';
       const color=m.score>=50?'#ef4444':(isBexar?'#6366f1':'#f97316');
       L.circleMarker([m.lat,m.lng],{{radius:m.score>=50?10:7,fillColor:color,color:'#fff',weight:1.5,opacity:1,fillOpacity:0.85}})
-       .addTo(map).bindPopup('<b>'+m.name+'</b> ['+m.county+']<br>'+m.doc_type+'<br>Filed: '+m.date+' ('+m.days+'d ago)<br>Score: <b>'+m.score+'</b><br><a href="'+m.maps_url+'" target="_blank">Search in Google Maps</a>');
+       .addTo(map).bindPopup('<b>'+m.name+'</b> ['+m.county+']<br>'+(m.address||m.doc_type)+'<br>Filed: '+m.date+' ('+m.days+'d ago)<br>Score: <b>'+m.score+'</b>'+(m.maps_url?'<br><a href="'+m.maps_url+'" target="_blank">📍 Maps</a>':''));
     }});
   }};document.head.appendChild(ls);
 }}
 </script></body></html>"""
 
 
-# ─── MAIN ────────────────────────────────────────────────────────────────────
+def load_prev() -> set:
+    try:
+        if PREV_DOCS_FILE.exists():
+            return set(json.loads(PREV_DOCS_FILE.read_text()))
+    except: pass
+    return set()
+
+def save_prev(records):
+    PREV_DOCS_FILE.write_text(json.dumps([r.document_number for r in records if r.document_number]))
+
+def find_new(records, prev) -> list:
+    return [r for r in records if r.seller_score>=NOTIFY_MIN_SCORE and r.document_number not in prev]
+
+
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     prev = load_prev()
@@ -685,7 +735,7 @@ def main():
         log.warning("Using Bexar demo data.")
         bexar_records = demo(50, "Bexar", "San Antonio")
 
-    # Load Harris County data if it exists
+    # Load Harris County data
     log.info("=== Loading Harris County data ===")
     harris_records = []
     harris_file = Path("Harris/output.json")
@@ -696,11 +746,11 @@ def main():
                 rec = PropertyRecord(**{k:v for k,v in r.items() if k in PropertyRecord.__dataclass_fields__})
                 rec.county = "Harris"
                 harris_records.append(rec)
-            log.info(f"Loaded {len(harris_records)} Harris records from file.")
+            log.info(f"Loaded {len(harris_records)} Harris records.")
         except Exception as e:
             log.error(f"Harris load error: {e}")
     else:
-        log.warning("No Harris data yet — using demo.")
+        log.warning("No Harris data — using demo.")
         harris_records = demo(50, "Harris", "Houston")
 
     # Combine and sort
@@ -708,7 +758,7 @@ def main():
     all_records.sort(key=lambda r: r.seller_score, reverse=True)
     log.info(f"Total combined: {len(all_records)}")
 
-    # Look up real addresses for 70+ scored records
+    # GIS address lookup for 70+ records
     lookup_addresses(all_records)
 
     # New leads detection
@@ -723,14 +773,12 @@ def main():
                    "total_records":len(bexar_records),"new_leads_count":len(new_leads),
                    "live_data":any(r.source_url and "publicsearch" in r.source_url for r in bexar_records),
                    "records":[asdict(r) for r in bexar_records]},f,indent=2)
-    log.info("Bexar JSON saved.")
 
     # Build combined dashboard
     with open(DASHBOARD_FILE,"w",encoding="utf-8") as f:
         f.write(build_dashboard(all_records, new_docs))
-    log.info("Combined dashboard saved.")
+    log.info("Dashboard saved.")
 
-    # Slack
     slack_daily_summary(bexar_records, harris_records, new_leads)
     if new_leads: slack_new_alerts(new_leads)
 
