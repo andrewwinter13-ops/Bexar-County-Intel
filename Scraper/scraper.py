@@ -284,8 +284,9 @@ def parse_lot_block(legal_desc: str):
 
 def gis_lookup_bexar(session, legal_desc: str) -> str:
     """
-    Query Bexar County GIS API using Lot/Block from legal description.
-    Falls back to a broader search if no lot/block found.
+    Query Bexar County GIS API using LglDesc field.
+    The Bexar parcels layer has no Lot/Block fields — it uses LglDesc instead.
+    We extract key terms from the legal description and search against LglDesc.
     """
     try:
         lot, blk = parse_lot_block(legal_desc)
@@ -293,34 +294,40 @@ def gis_lookup_bexar(session, legal_desc: str) -> str:
             log.debug(f"  No lot/block in: {legal_desc[:60]}")
             return ""
 
-        # Query GIS by lot and block
-        where = f"Lot = '{lot}' AND Block = '{blk}'"
-        params = {
-            "where": where,
-            "outFields": "Lot,Block,Situs,Owner",
-            "returnGeometry": "false",
-            "f": "json",
-            "resultRecordCount": 5,
-        }
-        resp = session.get(BEXAR_GIS, params=params, timeout=10)
-        data = resp.json()
+        # Bexar GIS has LglDesc field — search using lot and block numbers
+        # Escape single quotes
+        lot_safe = lot.replace("'", "''")
+        blk_safe = blk.replace("'", "''")
 
-        # Log any errors from API
-        if "error" in data:
-            log.debug(f"  Bexar GIS API error: {data['error']}")
-            # Try alternate field names
-            where2 = f"LotNum = '{lot}' AND BlockNum = '{blk}'"
-            params["where"] = where2
+        # Try multiple query patterns since LglDesc format varies
+        queries = [
+            f"LglDesc LIKE '%LOT {lot_safe}%BLK {blk_safe}%'",
+            f"LglDesc LIKE '%LOT {lot_safe}%BLOCK {blk_safe}%'",
+            f"LglDesc LIKE '%LT {lot_safe}%BK {blk_safe}%'",
+        ]
+
+        for where in queries:
+            params = {
+                "where": where,
+                "outFields": "Situs,Owner,LglDesc",
+                "returnGeometry": "false",
+                "f": "json",
+                "resultRecordCount": 5,
+            }
             resp = session.get(BEXAR_GIS, params=params, timeout=10)
             data = resp.json()
 
-        features = data.get("features", [])
-        if features:
-            attrs = features[0].get("attributes", {})
-            addr = (attrs.get("Situs") or "").strip()
-            if addr and len(addr) > 5:
-                log.info(f"  Bexar GIS: Lot {lot} Blk {blk} → {addr}")
-                return addr.title()
+            if "error" in data:
+                log.debug(f"  Bexar GIS error: {data['error']}")
+                continue
+
+            features = data.get("features", [])
+            if features:
+                attrs = features[0].get("attributes", {})
+                addr = (attrs.get("Situs") or "").strip()
+                if addr and len(addr) > 5:
+                    log.info(f"  Bexar GIS: Lot {lot} Blk {blk} → {addr}")
+                    return addr.title()
 
     except Exception as e:
         log.debug(f"Bexar GIS error: {e}")
