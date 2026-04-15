@@ -203,9 +203,9 @@ def extract(driver, sel, county="Bexar", city="San Antonio"):
             def c(i,d=""):
                 try: return cells[i].text.strip() or d
                 except: return d
-            fd=c(3); g=c(0)
+            fd=c(4); g=c(0)
             rec = PropertyRecord(grantor=g,grantee=c(1),doc_type=c(2),
-                file_date=fd,document_number=c(4),legal_description=c(5),
+                document_number=c(3),file_date=fd,legal_description=c(5),
                 lot=c(6),block=c(7),county=county,source_url=driver.current_url,
                 days_on_record=calc_days(fd),maps_url=make_maps_url(g,city))
             if rec.grantor or rec.document_number:
@@ -282,51 +282,55 @@ def parse_lot_block(legal_desc: str):
     return lot, blk
 
 
-def gis_lookup_bexar(session, legal_desc: str) -> str:
+def gis_lookup_bexar(session, legal_desc: str, grantor: str = "") -> str:
     """
-    Query Bexar County GIS API using LglDesc field.
-    The Bexar parcels layer has no Lot/Block fields — it uses LglDesc instead.
-    We extract key terms from the legal description and search against LglDesc.
+    Query Bexar County GIS API by owner name.
+    Note: Bexar recorder site returns doc type in legal_description field,
+    not actual lot/block data — so we search by Owner name instead.
     """
     try:
-        lot, blk = parse_lot_block(legal_desc)
-        if not lot or not blk:
-            log.debug(f"  No lot/block in: {legal_desc[:60]}")
+        # Use grantor name to search Owner field
+        name = grantor.strip().upper()
+        if not name or len(name) < 3:
             return ""
 
-        # Bexar GIS has LglDesc field — search using lot and block numbers
-        # Escape single quotes
-        lot_safe = lot.replace("'", "''")
-        blk_safe = blk.replace("'", "''")
+        # Skip company/government grantors — they own too many properties
+        skip_keywords = ["INTERNAL REVENUE", "STATE OF TEXAS", "WELLS FARGO",
+                        "BANK", "LLC", "INC", "CORP", "TRUST", "MORTGAGE",
+                        "QUICKEN", "JP MORGAN", "US BANK", "GOODLEAP"]
+        if any(kw in name for kw in skip_keywords):
+            log.debug(f"  Skipping company: {name}")
+            return ""
 
-        # Try multiple query patterns since LglDesc format varies
-        queries = [
-            f"LglDesc LIKE '%LOT {lot_safe}%BLK {blk_safe}%'",
-            f"LglDesc LIKE '%LOT {lot_safe}%BLOCK {blk_safe}%'",
-            f"LglDesc LIKE '%LT {lot_safe}%BK {blk_safe}%'",
-        ]
+        # Get last name for initial search
+        last = name.split(",")[0].strip() if "," in name else name.split()[0].strip()
+        last = last.replace("'", "''")
 
-        for where in queries:
-            params = {
-                "where": where,
-                "outFields": "Situs,Owner,LglDesc",
-                "returnGeometry": "false",
-                "f": "json",
-                "resultRecordCount": 5,
-            }
-            resp = session.get(BEXAR_GIS, params=params, timeout=10)
-            data = resp.json()
+        params = {
+            "where": f"Owner LIKE '{last}%'",
+            "outFields": "Owner,Situs,LglDesc",
+            "returnGeometry": "false",
+            "f": "json",
+            "resultRecordCount": 10,
+        }
+        resp = session.get(BEXAR_GIS, params=params, timeout=10)
+        data = resp.json()
 
-            if "error" in data:
-                log.debug(f"  Bexar GIS error: {data['error']}")
-                continue
+        if "error" in data:
+            log.debug(f"  Bexar GIS error: {data['error']}")
+            return ""
 
-            features = data.get("features", [])
-            if features:
-                attrs = features[0].get("attributes", {})
+        # Find best match by checking all name parts
+        name_parts = [p for p in name.split() if len(p) > 2]
+        for feat in data.get("features", []):
+            attrs = feat.get("attributes", {})
+            owner = (attrs.get("Owner") or "").upper()
+            # Require at least 2 name parts to match
+            matches = sum(1 for p in name_parts if p in owner)
+            if matches >= 2:
                 addr = (attrs.get("Situs") or "").strip()
                 if addr and len(addr) > 5:
-                    log.info(f"  Bexar GIS: Lot {lot} Blk {blk} → {addr}")
+                    log.info(f"  Bexar GIS: {owner} → {addr}")
                     return addr.title()
 
     except Exception as e:
@@ -403,7 +407,7 @@ def lookup_addresses(records):
                 addr = gis_lookup_harris(session, rec.legal_description)
                 city = "Houston"
             else:
-                addr = gis_lookup_bexar(session, rec.legal_description)
+                addr = gis_lookup_bexar(session, rec.legal_description, rec.grantor)
                 city = "San Antonio"
 
             if addr:
