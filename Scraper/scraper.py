@@ -23,9 +23,9 @@ SEARCH_URL       = ("https://bexar.tx.publicsearch.us/results"
                     "?department=RP&recordType=OR"
                     "&dateFrom=01%2F01%2F2024&dateTo=12%2F31%2F2025")
 DASHBOARD_URL    = "https://andrewwinter13-ops.github.io/Bexar-County-Intel/Scraper/index.html"
-MAX_PAGES        = 20
-PAGE_LOAD_WAIT   = 15
-BETWEEN_PAGES    = 3
+MAX_PAGES        = 10
+PAGE_LOAD_WAIT   = 10
+BETWEEN_PAGES    = 1.5
 NOTIFY_MIN_SCORE = 30
 
 OUTPUT_DIR     = Path("Scraper")
