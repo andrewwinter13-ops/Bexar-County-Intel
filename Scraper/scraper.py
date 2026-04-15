@@ -253,11 +253,76 @@ def scrape_county(url, county, city):
 # ─── DEMO DATA ───────────────────────────────────────────────────────────────
 ADDRESS_LOOKUP_MIN_SCORE = 70  # Only look up addresses for records scoring 70+
 
+# GIS API endpoints — no Selenium needed, pure JSON
+BEXAR_GIS  = "https://maps.bexar.org/arcgis/rest/services/Parcels/MapServer/0/query"
+HARRIS_GIS = "https://www.gis.hctx.net/arcgis/rest/services/HCAD/Parcels/MapServer/0/query"
+
+
+def gis_lookup_bexar(session, grantor: str) -> str:
+    """Query Bexar County GIS ArcGIS API for property address by owner name."""
+    try:
+        name = grantor.strip().upper()
+        last = name.split(",")[0].strip() if "," in name else name.split()[0].strip()
+        # Escape single quotes in name
+        last = last.replace("'", "''")
+        params = {
+            "where": f"Owner LIKE '{last}%'",
+            "outFields": "Owner,Situs",
+            "returnGeometry": "false",
+            "f": "json",
+            "resultRecordCount": 10,
+        }
+        resp = session.get(BEXAR_GIS, params=params, timeout=10)
+        data = resp.json()
+        for feat in data.get("features", []):
+            attrs = feat.get("attributes", {})
+            owner = (attrs.get("Owner") or "").upper()
+            # Verify name match
+            name_parts = [p for p in name.split() if len(p) > 2]
+            if any(p in owner for p in name_parts[:2]):
+                addr = (attrs.get("Situs") or "").strip()
+                if addr and len(addr) > 5:
+                    log.info(f"  BEXAR GIS match: {owner} → {addr}")
+                    return addr.title()
+    except Exception as e:
+        log.debug(f"Bexar GIS error: {e}")
+    return ""
+
+
+def gis_lookup_harris(session, grantor: str) -> str:
+    """Query Harris County GIS ArcGIS API for property address by owner name."""
+    try:
+        name = grantor.strip().upper()
+        last = name.split(",")[0].strip() if "," in name else name.split()[0].strip()
+        last = last.replace("'", "''")
+        params = {
+            "where": f"owner_name_1 LIKE '{last}%'",
+            "outFields": "owner_name_1,site_addr_1,site_addr_2,site_addr_3",
+            "returnGeometry": "false",
+            "f": "json",
+            "resultRecordCount": 10,
+        }
+        resp = session.get(HARRIS_GIS, params=params, timeout=10)
+        data = resp.json()
+        for feat in data.get("features", []):
+            attrs = feat.get("attributes", {})
+            owner = (attrs.get("owner_name_1") or "").upper()
+            name_parts = [p for p in name.split() if len(p) > 2]
+            if any(p in owner for p in name_parts[:2]):
+                parts = [attrs.get("site_addr_1",""), attrs.get("site_addr_2",""), attrs.get("site_addr_3","")]
+                addr = " ".join(p for p in parts if p).strip()
+                if addr and len(addr) > 5:
+                    log.info(f"  HARRIS GIS match: {owner} → {addr}")
+                    return addr.title()
+    except Exception as e:
+        log.debug(f"Harris GIS error: {e}")
+    return ""
+
 
 def lookup_addresses(records):
     """
-    For records scoring 70+, look up the real property address from
-    BCAD (Bexar) or HCAD (Harris) using Selenium.
+    For records scoring 70+, query county GIS APIs for real property addresses.
+    No Selenium needed — uses ArcGIS REST JSON APIs directly.
     Updates rec.property_address and rec.maps_url in place.
     """
     targets = [r for r in records
@@ -268,94 +333,36 @@ def lookup_addresses(records):
         log.info("No 70+ records need address lookup.")
         return
 
-    log.info(f"Looking up addresses for {len(targets)} records scoring 70+...")
-    driver = make_driver()
+    log.info(f"GIS address lookup for {len(targets)} records scoring 70+...")
+    session = requests.Session()
+    session.headers.update({"User-Agent": "Mozilla/5.0"})
+    found = 0
 
-    try:
-        for i, rec in enumerate(targets):
-            try:
-                if rec.county == "Harris":
-                    addr = _lookup_hcad(driver, rec.grantor)
-                else:
-                    addr = _lookup_bcad(driver, rec.grantor)
+    for i, rec in enumerate(targets):
+        try:
+            if rec.county == "Harris":
+                addr = gis_lookup_harris(session, rec.grantor)
+                city = "Houston"
+            else:
+                addr = gis_lookup_bexar(session, rec.grantor)
+                city = "San Antonio"
 
-                if addr:
-                    rec.property_address = addr
-                    city = "Houston" if rec.county == "Harris" else "San Antonio"
-                    rec.maps_url = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(addr + ', ' + city + ', TX')}"
-                    log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → {addr}")
-                else:
-                    log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → no address found")
+            if addr:
+                rec.property_address = addr
+                q = urllib.parse.quote(f"{addr}, {city}, TX")
+                rec.maps_url = f"https://www.google.com/maps/search/?api=1&query={q}"
+                found += 1
+                log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → {addr}")
+            else:
+                log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → not found")
 
-                time.sleep(1.5)  # polite delay between lookups
+            time.sleep(0.5)
 
-            except Exception as e:
-                log.debug(f"  Address lookup error for {rec.grantor}: {e}")
-                continue
-    finally:
-        driver.quit()
+        except Exception as e:
+            log.debug(f"Lookup error {rec.grantor}: {e}")
 
+    log.info(f"GIS lookup complete: {found}/{len(targets)} addresses found")
 
-def _lookup_bcad(driver, grantor: str) -> str:
-    """Look up property address on BCAD by owner name."""
-    try:
-        name_enc = urllib.parse.quote_plus(grantor)
-        url = f"https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110&searchtype=o&searchterm={name_enc}"
-        driver.get(url)
-        time.sleep(4)
-
-        # Save debug HTML on first lookup
-        debug_file = Path("Scraper/debug_bcad.html")
-        if not debug_file.exists():
-            debug_file.write_text(driver.page_source)
-            log.info("Saved debug_bcad.html")
-
-        # Try every td on the page and log what we find
-        all_tds = driver.find_elements(By.TAG_NAME, "td")
-        for td in all_tds:
-            txt = td.text.strip()
-            if txt and any(c.isdigit() for c in txt) and 8 < len(txt) < 80:
-                # Looks like it could be an address
-                if any(word in txt.upper() for word in ["ST","AVE","DR","RD","LN","BLVD","WAY","CT","PL","TRL"]):
-                    log.info(f"  BCAD possible address: {txt}")
-                    return txt.title()
-
-    except Exception as e:
-        log.debug(f"BCAD lookup error: {e}")
-    return ""
-
-
-def _lookup_hcad(driver, grantor: str) -> str:
-    """Look up property address on HCAD by owner name."""
-    try:
-        name_enc = urllib.parse.quote_plus(grantor)
-        url = f"https://public.hcad.org/records/details.asp?searchtype=ownername&searchterm={name_enc}"
-        driver.get(url)
-        time.sleep(4)
-
-        # Save debug HTML on first lookup
-        debug_file = Path("Scraper/debug_hcad.html")
-        if not debug_file.exists():
-            debug_file.write_text(driver.page_source)
-            log.info("Saved debug_hcad.html")
-
-        # Try every td on the page
-        all_tds = driver.find_elements(By.TAG_NAME, "td")
-        for td in all_tds:
-            txt = td.text.strip()
-            if txt and any(c.isdigit() for c in txt) and 8 < len(txt) < 80:
-                if any(word in txt.upper() for word in ["ST","AVE","DR","RD","LN","BLVD","WAY","CT","PL","FWY","HWY"]):
-                    log.info(f"  HCAD possible address: {txt}")
-                    return txt.title()
-
-    except Exception as e:
-        log.debug(f"HCAD lookup error: {e}")
-    return ""
-
-
-def demo(n=50, county="Bexar", city="San Antonio"):
-    fnames = ["James","Maria","Robert","Linda","Michael","Patricia","William","Barbara","David","Elizabeth"]
-    lnames = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Wilson","Anderson","Rodriguez","Martinez"]
     cos    = ["INTERNAL REVENUE SERVICE","STATE OF TEXAS","GOODLEAP LLC","INDEPENDENT BANK","RCN CAPITAL LLC"]
     dtypes = [("DEED OF TRUST",False),("FEDERAL TAX LIEN",True),("STATE TAX LIEN",True),
               ("JUDGMENT LIEN",True),("DEED",False),("AFFIDAVIT",True),("RELEASE OF FTL",True)]
