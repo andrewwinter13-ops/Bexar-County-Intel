@@ -432,67 +432,78 @@ def scrape_harris_selenium():
 ADDRESS_LOOKUP_MIN_SCORE = 70
 HARRIS_GIS = "https://www.gis.hctx.net/arcgis/rest/services/HCAD/Parcels/MapServer/0/query"
 
+import re as _re
+
+def _parse_lot_block(legal_desc: str):
+    legal = legal_desc.upper()
+    lot_m = _re.search(r'\bLO?T[:\s]+(\d+[A-Z]?)', legal)
+    blk_m = _re.search(r'\bBL?O?C?K?[:\s]+(\d+[A-Z]?)', legal)
+    return (lot_m.group(1) if lot_m else None,
+            blk_m.group(1) if blk_m else None)
+
 
 def lookup_hcad_addresses(records):
-    """
-    Query Harris County GIS ArcGIS API for property addresses.
-    No Selenium — pure JSON API calls.
-    """
+    """Query Harris County GIS API using Lot/Block from legal description."""
     targets = [r for r in records
                if r.seller_score >= ADDRESS_LOOKUP_MIN_SCORE
-               and not r.property_address]
+               and not r.property_address
+               and r.legal_description]
 
     if not targets:
         log.info("No 70+ records need address lookup.")
         return
 
     log.info(f"Harris GIS address lookup for {len(targets)} records scoring 70+...")
-    import requests as req_module
-    session = req_module.Session()
+    import requests as req_mod
+    session = req_mod.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0"})
     found = 0
 
     for i, rec in enumerate(targets):
         try:
-            name = rec.grantor.strip().upper()
-            last = name.split(",")[0].strip() if "," in name else name.split()[0].strip()
-            last = last.replace("'", "''")
+            lot, blk = _parse_lot_block(rec.legal_description)
+            if not lot or not blk:
+                log.debug(f"  No lot/block: {rec.legal_description[:50]}")
+                continue
+
             params = {
-                "where": f"owner_name_1 LIKE '{last}%'",
-                "outFields": "owner_name_1,site_addr_1,site_addr_2,site_addr_3",
+                "where": f"lot = '{lot}' AND block = '{blk}'",
+                "outFields": "lot,block,site_addr_1,site_addr_2,site_addr_3",
                 "returnGeometry": "false",
                 "f": "json",
-                "resultRecordCount": 10,
+                "resultRecordCount": 5,
             }
             resp = session.get(HARRIS_GIS, params=params, timeout=10)
             data = resp.json()
+
+            if "error" in data:
+                log.debug(f"  Harris GIS error: {data['error']}")
+                continue
+
             addr = ""
             for feat in data.get("features", []):
                 attrs = feat.get("attributes", {})
-                owner = (attrs.get("owner_name_1") or "").upper()
-                name_parts = [p for p in name.split() if len(p) > 2]
-                if any(p in owner for p in name_parts[:2]):
-                    parts = [attrs.get("site_addr_1",""), attrs.get("site_addr_2",""), attrs.get("site_addr_3","")]
-                    addr = " ".join(p for p in parts if p).strip()
-                    if addr and len(addr) > 5:
-                        addr = addr.title()
-                        break
+                parts = [attrs.get("site_addr_1",""), attrs.get("site_addr_2",""), attrs.get("site_addr_3","")]
+                addr = " ".join(p for p in parts if p).strip()
+                if addr and len(addr) > 5:
+                    addr = addr.title()
+                    break
 
             if addr:
                 rec.property_address = addr
                 q = urllib.parse.quote(f"{addr}, Houston, TX")
                 rec.maps_url = f"https://www.google.com/maps/search/?api=1&query={q}"
                 found += 1
-                log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → {addr}")
+                log.info(f"  [{i+1}/{len(targets)}] Lot {lot} Blk {blk} → {addr}")
             else:
-                log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → not found")
+                log.info(f"  [{i+1}/{len(targets)}] Lot {lot} Blk {blk} → not found")
 
-            time.sleep(0.5)
+            time.sleep(0.3)
 
         except Exception as e:
             log.debug(f"Harris GIS error {rec.grantor}: {e}")
 
-    log.info(f"Harris GIS lookup complete: {found}/{len(targets)} found")
+    log.info(f"Harris GIS complete: {found}/{len(targets)} addresses found")
 
 def generate_demo_records(n=50):
     firstnames = ["James","Maria","Robert","Linda","Michael","Patricia","William","Barbara","David","Elizabeth"]
