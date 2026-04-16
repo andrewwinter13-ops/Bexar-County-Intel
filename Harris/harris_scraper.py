@@ -566,10 +566,22 @@ def build_dashboard(records, new_lead_doc_numbers=None):
     rows = ""
     for i, r in enumerate(records):
         nb = '<span class="new-badge">NEW</span>' if r.document_number in new_lead_doc_numbers else ""
-        grantor_enc = urllib.parse.quote_plus(r.grantor)
-        cad_url = f"https://public.hcad.org/records/details.asp?searchtype=ownername&searchterm={grantor_enc}"
         maps_btn = f'<a href="{r.maps_url}" target="_blank" class="maps-link">📍 Maps</a>' if r.maps_url else ""
-        cad_btn  = f'<a href="{cad_url}" target="_blank" class="cad-link">🏠 HCAD</a>'
+        # Only show lookup button for individual names, not companies
+        skip_co = ["INTERNAL REVENUE","STATE OF TEXAS","WELLS FARGO","US BANK",
+                   "JP MORGAN","QUICKEN","BANK","LLC","INC","CORP","TRUST","MORTGAGE","SERVICE"]
+        is_company = any(kw in r.grantor.upper() for kw in skip_co)
+        if not is_company:
+            if r.property_address:
+                # If we have the address, search HCAD by address
+                addr_enc = urllib.parse.quote_plus(r.property_address.split(",")[0].strip())
+                cad_url = f"https://public.hcad.org/records/Real/byAddress.asp?stnum=&rnumb={addr_enc}&zip=&taxyear=2025"
+            else:
+                # Fallback to Google search scoped to HCAD
+                cad_url = f"https://www.google.com/search?q=site:public.hcad.org+{urllib.parse.quote_plus(r.grantor)}"
+            cad_btn = f'<a href="{cad_url}" target="_blank" class="cad-link">🏠 HCAD</a>'
+        else:
+            cad_btn = ""
         ml = f'<div class="lookup-btns">{maps_btn}{cad_btn}</div>'
         addr = r.property_address if r.property_address else (r.legal_description[:40]+"…" if len(r.legal_description)>40 else r.legal_description)
         rows += (f'<tr class="record-row {"hot-row" if r.seller_score>=50 else ""}" '
