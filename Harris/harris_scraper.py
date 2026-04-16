@@ -33,7 +33,7 @@ DATE_FROM = datetime.utcnow().strftime("%m/01/%Y").replace(
 DATE_FROM = f"01/01/{datetime.utcnow().year}"
 
 
-MAX_PAGES        = 10
+MAX_PAGES        = 20
 PAGE_LOAD_WAIT   = 10
 BETWEEN_PAGES    = 1.5
 NOTIFY_MIN_SCORE = 30
@@ -349,35 +349,52 @@ def extract_harris_rows(driver) -> list:
 
 
 def click_harris_next(driver) -> bool:
-    """Click next page on Harris County results."""
-    # Harris County uses ASP.NET paging
-    next_selectors = [
-        "a[href*='Page$Next']",
-        "a[title='Next Page']",
-        "a[href*='__doPostBack'][href*='Next']",
-        ".rgPageNext",
-        "input[value='Next']",
-    ]
-    for sel in next_selectors:
-        try:
-            btn = driver.find_element(By.CSS_SELECTOR, sel)
-            if btn.is_displayed():
-                driver.execute_script("arguments[0].click();", btn)
-                time.sleep(BETWEEN_PAGES)
-                return True
-        except: continue
-
-    # Try finding by text
+    """Click next page on Harris County ASP.NET results."""
     try:
-        links = driver.find_elements(By.TAG_NAME, "a")
+        # Method 1: Look for any link/button with next page text
+        for text in ["Next", "next", "›", "»", ">", "Next >"]:
+            try:
+                els = driver.find_elements(By.XPATH,
+                    f"//a[normalize-space(text())='{text}'] | "
+                    f"//input[@value='{text}'] | "
+                    f"//span[normalize-space(text())='{text}']/parent::a")
+                for el in els:
+                    if el.is_displayed() and el.is_enabled():
+                        driver.execute_script("arguments[0].click();", el)
+                        time.sleep(BETWEEN_PAGES)
+                        log.info(f"  Clicked next via text: '{text}'")
+                        return True
+            except: continue
+
+        # Method 2: Find ASP.NET __doPostBack pagination links
+        links = driver.find_elements(By.CSS_SELECTOR, "a[href*='__doPostBack']")
         for link in links:
-            if link.text.strip() in ["Next", "›", "»", "Next >"]:
+            href = link.get_attribute("href") or ""
+            txt = link.text.strip()
+            # Look for numeric page links or Next
+            if txt.isdigit() or "next" in txt.lower() or txt in ["›","»",">"]:
                 if link.is_displayed():
                     driver.execute_script("arguments[0].click();", link)
                     time.sleep(BETWEEN_PAGES)
+                    log.info(f"  Clicked doPostBack link: '{txt}'")
                     return True
-    except: pass
 
+        # Method 3: Find by common paging CSS classes
+        for sel in ["a.rgCurrentPage + a", ".rgNumPart a:last-child",
+                    "[class*='page'] a[href*='Next']", "td > a:last-child"]:
+            try:
+                el = driver.find_element(By.CSS_SELECTOR, sel)
+                if el.is_displayed():
+                    driver.execute_script("arguments[0].click();", el)
+                    time.sleep(BETWEEN_PAGES)
+                    log.info(f"  Clicked pager via CSS: {sel}")
+                    return True
+            except: continue
+
+    except Exception as e:
+        log.debug(f"Pagination error: {e}")
+
+    log.info("  No next page found.")
     return False
 
 
