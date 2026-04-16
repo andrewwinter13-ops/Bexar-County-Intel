@@ -60,12 +60,44 @@ DISTRESS_KEYWORDS = {
 }
 
 DISTRESS_DOC_TYPES = {
-    "tax_delinquent":     ["TAX LIEN", "FED TAX", "STATE TAX", "IRS", "FTL"],
+    # Full names
+    "tax_delinquent":     ["TAX LIEN", "FED TAX", "STATE TAX", "IRS", "FTL", "FEDERAL TAX"],
     "code_violation":     ["CODE VIOL", "VIOLATION"],
-    "probate_filing":     ["PROBATE", "HEIRSHIP", "LETTERS TEST", "AFFIDAVIT"],
+    "probate_filing":     ["PROBATE", "HEIRSHIP", "LETTERS TEST", "AFFIDAVIT", "AFFT"],
     "multiple_liens":     ["JUDGMENT", "LIS PENDENS", "MECHANIC LIEN", "UCC", "LIEN"],
     "divorce_bankruptcy": ["QUITCLAIM", "BANKRUPTCY", "DISSOLUTION"],
+    # Harris County abbreviations seen in actual data
+    # FI STM = Financial Statement (lien), W/D = Withdrawal, D/T = Deed of Trust
+    # ASSON = Assignment, LIEN = Lien, NOTICE = Notice
 }
+
+# Harris County specific abbreviation map — expand before scoring
+HARRIS_DOC_ABBREV = {
+    "FI STM":  "FINANCIAL STATEMENT LIEN",
+    "FI ST":   "FINANCIAL STATEMENT LIEN",
+    "FISTM":   "FINANCIAL STATEMENT LIEN",
+    "LIEN":    "LIEN",
+    "FTL":     "FEDERAL TAX LIEN",
+    "STL":     "STATE TAX LIEN",
+    "JDG":     "JUDGMENT LIEN",
+    "JDGM":    "JUDGMENT LIEN",
+    "LP":      "LIS PENDENS",
+    "LIS":     "LIS PENDENS",
+    "AFFT":    "AFFIDAVIT OF HEIRSHIP",
+    "AFF":     "AFFIDAVIT",
+    "ASSON":   "ASSIGNMENT",
+    "ASSN":    "ASSIGNMENT",
+    "NOTICE":  "NOTICE OF DEFAULT",
+    "NOD":     "NOTICE OF DEFAULT",
+    "BK":      "BANKRUPTCY",
+    "QCD":     "QUITCLAIM DEED",
+    "W/D":     "WITHDRAWAL",
+    "D/T":     "DEED OF TRUST",
+    "WD":      "WITHDRAWAL",
+    "DT":      "DEED OF TRUST",
+    "PROB":    "PROBATE",
+}
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
@@ -116,13 +148,16 @@ def make_maps_url(name: str) -> str:
 
 
 def score_record(rec):
-    searchable = " ".join([rec.grantor, rec.grantee, rec.legal_description, rec.doc_type]).lower()
+    # Expand Harris County abbreviations before scoring
+    doc_expanded = HARRIS_DOC_ABBREV.get(rec.doc_type.upper().strip(), rec.doc_type)
+    searchable = " ".join([rec.grantor, rec.grantee, rec.legal_description,
+                           rec.doc_type, doc_expanded]).lower()
     score = 0
     for signal, keywords in DISTRESS_KEYWORDS.items():
         if any(kw in searchable for kw in keywords):
             setattr(rec, signal, True)
             score += SCORE_WEIGHTS[signal]
-    doc_upper = rec.doc_type.upper()
+    doc_upper = doc_expanded.upper()
     for signal, doc_types in DISTRESS_DOC_TYPES.items():
         if any(dt in doc_upper for dt in doc_types):
             if not getattr(rec, signal):
