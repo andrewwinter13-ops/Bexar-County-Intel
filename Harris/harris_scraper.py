@@ -323,57 +323,74 @@ def extract_harris_rows(driver) -> list:
     """Extract records from Harris County results table."""
     records = []
     try:
-        # Harris County table has columns:
-        # File Number | File Date | Doc Type | Grantor | Grantee | Legal Description | Pages | Film Code
-        rows = driver.find_elements(By.CSS_SELECTOR, "table tr")
-        if not rows:
-            rows = driver.find_elements(By.CSS_SELECTOR, "#GridView1 tr, .rgRow, .rgAltRow")
+        # Log all tables found on page
+        tables = driver.find_elements(By.TAG_NAME, "table")
+        log.info(f"  Found {len(tables)} tables on page")
+        for ti, tbl in enumerate(tables):
+            rows = tbl.find_elements(By.TAG_NAME, "tr")
+            log.info(f"    Table {ti}: {len(rows)} rows, id={tbl.get_attribute('id')} class={tbl.get_attribute('class')}")
 
-        for row in rows:
-            try:
-                cells = row.find_elements(By.TAG_NAME, "td")
-                if len(cells) < 4:
-                    continue
+        # Try each table to find the results one
+        for tbl in tables:
+            tbl_rows = tbl.find_elements(By.TAG_NAME, "tr")
+            if len(tbl_rows) < 2:
+                continue
 
-                def cell(i, d=""):
-                    try: return cells[i].text.strip() or d
-                    except: return d
+            tbl_records = []
+            for row in tbl_rows:
+                try:
+                    cells = row.find_elements(By.TAG_NAME, "td")
+                    if len(cells) < 3:
+                        continue
 
-                # Harris County column order:
-                # File Number | File Date | Doc Type | Grantor | Grantee | Legal Desc | Pages | Film Code
-                file_num  = cell(0)
-                file_date = cell(1)
-                doc_type  = cell(2)
-                grantor   = cell(3)
-                grantee   = cell(4)
-                legal     = cell(5)
-                pages     = cell(6)
-                film_code = cell(7)
+                    def cell(i, d=""):
+                        try: return cells[i].text.strip() or d
+                        except: return d
 
-                # Skip header rows
-                if not file_num or file_num.lower() in ["file number", "file no", "#"]:
-                    continue
+                    # Log first row to understand structure
+                    if not tbl_records:
+                        log.info(f"  First data row has {len(cells)} cells: {[cell(i) for i in range(min(8,len(cells)))]}")
 
-                rec = PropertyRecord(
-                    document_number=file_num,
-                    file_date=file_date,
-                    doc_type=doc_type,
-                    grantor=grantor,
-                    grantee=grantee,
-                    legal_description=legal,
-                    pages=pages,
-                    film_code=film_code,
-                    source_url=driver.current_url,
-                    days_on_record=calc_days(file_date),
-                    maps_url=make_maps_url(grantor),
-                )
+                    # Harris County column order:
+                    # File Number | File Date | Doc Type | Grantor | Grantee | Legal | Pages | Film
+                    file_num  = cell(0)
+                    file_date = cell(1)
+                    doc_type  = cell(2)
+                    grantor   = cell(3)
+                    grantee   = cell(4)
+                    legal     = cell(5)
 
-                if rec.grantor or rec.document_number:
-                    score_record(rec)
-                    records.append(rec)
+                    # Skip header rows
+                    if not file_num or file_num.lower() in ["file number","file no","#","instrument"]:
+                        continue
+                    # Skip if looks like a date (header)
+                    if "date" in file_num.lower() or "number" in file_num.lower():
+                        continue
 
-            except Exception as e:
-                log.debug(f"Row error: {e}")
+                    rec = PropertyRecord(
+                        document_number=file_num,
+                        file_date=file_date,
+                        doc_type=doc_type,
+                        grantor=grantor,
+                        grantee=grantee,
+                        legal_description=legal,
+                        source_url=driver.current_url,
+                        days_on_record=calc_days(file_date),
+                        maps_url=make_maps_url(grantor),
+                    )
+                    if rec.grantor or rec.document_number:
+                        score_record(rec)
+                        tbl_records.append(rec)
+                except Exception as e:
+                    log.debug(f"Row error: {e}")
+
+            if tbl_records:
+                log.info(f"  Extracted {len(tbl_records)} records from table")
+                records.extend(tbl_records)
+                break  # Found the right table
+
+        if not records:
+            log.warning("  No records extracted — check debug_page.html for table structure")
 
     except Exception as e:
         log.error(f"Extract error: {e}")
