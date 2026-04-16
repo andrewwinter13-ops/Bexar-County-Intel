@@ -26,10 +26,8 @@ COUNTY_NAME   = "Harris County, TX"
 SEARCH_URL    = "https://www.cclerk.hctx.net/applications/websearch/RP.aspx"
 DASHBOARD_URL = "https://andrewwinter13-ops.github.io/Bexar-County-Intel/Harris/index.html"
 
-# Date range — from Jan 1 of current year to today, grows daily
+# Date range — Jan 1 of current year to today, grows daily with new filings
 DATE_TO   = datetime.utcnow().strftime("%m/%d/%Y")
-DATE_FROM = datetime.utcnow().strftime("%m/01/%Y").replace(
-    datetime.utcnow().strftime("%m"), "01")  # Jan 1 of this year
 DATE_FROM = f"01/01/{datetime.utcnow().year}"
 
 
@@ -248,42 +246,77 @@ def make_driver():
 
 def fill_search_form(driver):
     """Fill in the Harris County search form and submit."""
-    wait = WebDriverWait(driver, PAGE_LOAD_WAIT)
-
-    # Wait for form to load
-    wait.until(EC.presence_of_element_located((By.ID, "DateFrom")))
-    time.sleep(2)
+    time.sleep(8)  # Wait for JS to fully render the form
 
     try:
-        # Clear and fill date from
-        date_from = driver.find_element(By.ID, "DateFrom")
-        date_from.clear()
-        date_from.send_keys(DATE_FROM)
+        # Save the form page so we can inspect it
+        Path("Harris/debug_form.html").write_text(driver.page_source)
+        log.info("Saved debug_form.html")
 
-        # Clear and fill date to
-        date_to = driver.find_element(By.ID, "DateTo")
-        date_to.clear()
-        date_to.send_keys(DATE_TO)
+        # Find ALL input fields on the page and log them
+        all_inputs = driver.find_elements(By.TAG_NAME, "input")
+        log.info(f"Found {len(all_inputs)} input elements:")
+        for inp in all_inputs:
+            log.info(f"  id={inp.get_attribute('id')} name={inp.get_attribute('name')} type={inp.get_attribute('type')} placeholder={inp.get_attribute('placeholder')}")
 
-        # Try to set instrument type to common distress types
-        # Leave blank to get all types, then filter by scoring
-        log.info(f"Searching Harris County records from {DATE_FROM} to {DATE_TO}")
+        # Find date inputs — look for any text input with date-related attributes
+        date_inputs = []
+        for inp in all_inputs:
+            iid   = (inp.get_attribute("id") or "").lower()
+            iname = (inp.get_attribute("name") or "").lower()
+            itype = (inp.get_attribute("type") or "").lower()
+            if itype in ["text", "date"] and any(
+                kw in iid or kw in iname
+                for kw in ["date", "from", "to", "start", "end", "begin"]
+            ):
+                date_inputs.append(inp)
 
-        # Click Search button
-        search_btn = driver.find_element(By.ID, "btnSearch")
-        driver.execute_script("arguments[0].click();", search_btn)
-        time.sleep(3)
+        log.info(f"Found {len(date_inputs)} date inputs")
 
-    except NoSuchElementException as e:
-        log.warning(f"Form element not found: {e}")
-        # Try alternative button IDs
-        for btn_id in ["Button1", "cmdSearch", "SearchButton", "btnGo"]:
-            try:
-                btn = driver.find_element(By.ID, btn_id)
-                btn.click()
-                time.sleep(3)
+        if len(date_inputs) >= 2:
+            date_inputs[0].clear()
+            date_inputs[0].send_keys(DATE_FROM)
+            log.info(f"Set date from: {DATE_FROM}")
+            date_inputs[1].clear()
+            date_inputs[1].send_keys(DATE_TO)
+            log.info(f"Set date to: {DATE_TO}")
+        elif len(date_inputs) == 1:
+            date_inputs[0].clear()
+            date_inputs[0].send_keys(DATE_FROM)
+            log.info(f"Set single date: {DATE_FROM}")
+
+        # Find submit button
+        submit_btn = None
+        for inp in all_inputs:
+            itype = (inp.get_attribute("type") or "").lower()
+            ival  = (inp.get_attribute("value") or "").lower()
+            if itype in ["submit", "button"] and any(
+                kw in ival for kw in ["search", "find", "go", "submit"]
+            ):
+                submit_btn = inp
+                log.info(f"Found submit: {inp.get_attribute('value')}")
                 break
-            except: continue
+
+        if not submit_btn:
+            for btn in driver.find_elements(By.TAG_NAME, "button"):
+                btxt = (btn.text or "").lower()
+                if any(kw in btxt for kw in ["search", "find", "go"]):
+                    submit_btn = btn
+                    log.info(f"Found button: {btn.text}")
+                    break
+
+        if submit_btn:
+            driver.execute_script("arguments[0].click();", submit_btn)
+            log.info("Clicked search button")
+            time.sleep(5)
+        else:
+            log.warning("No submit button found — check debug_form.html")
+
+    except Exception as e:
+        log.error(f"Form fill error: {e}")
+        try:
+            Path("Harris/debug_form.html").write_text(driver.page_source)
+        except: pass
 
 
 def extract_harris_rows(driver) -> list:
