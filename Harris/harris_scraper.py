@@ -323,74 +323,72 @@ def extract_harris_rows(driver) -> list:
     """Extract records from Harris County results table."""
     records = []
     try:
-        # Log all tables found on page
-        tables = driver.find_elements(By.TAG_NAME, "table")
-        log.info(f"  Found {len(tables)} tables on page")
-        for ti, tbl in enumerate(tables):
-            rows = tbl.find_elements(By.TAG_NAME, "tr")
-            log.info(f"    Table {ti}: {len(rows)} rows, id={tbl.get_attribute('id')} class={tbl.get_attribute('class')}")
+        # Target the specific table we identified: class=table-condensed table-hover table-striped
+        # or id=ItemPlaceholderContainer
+        target_rows = []
 
-        # Try each table to find the results one
-        for tbl in tables:
-            tbl_rows = tbl.find_elements(By.TAG_NAME, "tr")
-            if len(tbl_rows) < 2:
-                continue
+        for sel in [
+            "table.table-condensed tr",
+            "table.table-striped tr",
+            "#ItemPlaceholderContainer tr",
+            "table[class*='table-hover'] tr",
+        ]:
+            rows = driver.find_elements(By.CSS_SELECTOR, sel)
+            if len(rows) > 5:
+                log.info(f"  Using selector '{sel}' — found {len(rows)} rows")
+                target_rows = rows
+                break
 
-            tbl_records = []
-            for row in tbl_rows:
-                try:
-                    cells = row.find_elements(By.TAG_NAME, "td")
-                    if len(cells) < 3:
-                        continue
+        if not target_rows:
+            log.warning("  Could not find results table")
+            return []
 
-                    def cell(i, d=""):
-                        try: return cells[i].text.strip() or d
-                        except: return d
+        for row in target_rows:
+            try:
+                cells = row.find_elements(By.TAG_NAME, "td")
+                if len(cells) < 3:
+                    continue
 
-                    # Log first row to understand structure
-                    if not tbl_records:
-                        log.info(f"  First data row has {len(cells)} cells: {[cell(i) for i in range(min(8,len(cells)))]}")
+                def cell(i, d=""):
+                    try: return cells[i].text.strip() or d
+                    except: return d
 
-                    # Harris County column order:
-                    # File Number | File Date | Doc Type | Grantor | Grantee | Legal | Pages | Film
-                    file_num  = cell(0)
-                    file_date = cell(1)
-                    doc_type  = cell(2)
-                    grantor   = cell(3)
-                    grantee   = cell(4)
-                    legal     = cell(5)
+                # Log first record found
+                if not records:
+                    log.info(f"  First row {len(cells)} cells: {[cell(i) for i in range(min(8,len(cells)))]}")
 
-                    # Skip header rows
-                    if not file_num or file_num.lower() in ["file number","file no","#","instrument"]:
-                        continue
-                    # Skip if looks like a date (header)
-                    if "date" in file_num.lower() or "number" in file_num.lower():
-                        continue
+                file_num  = cell(0)
+                file_date = cell(1)
+                doc_type  = cell(2)
+                grantor   = cell(3)
+                grantee   = cell(4)
+                legal     = cell(5)
 
-                    rec = PropertyRecord(
-                        document_number=file_num,
-                        file_date=file_date,
-                        doc_type=doc_type,
-                        grantor=grantor,
-                        grantee=grantee,
-                        legal_description=legal,
-                        source_url=driver.current_url,
-                        days_on_record=calc_days(file_date),
-                        maps_url=make_maps_url(grantor),
-                    )
-                    if rec.grantor or rec.document_number:
-                        score_record(rec)
-                        tbl_records.append(rec)
-                except Exception as e:
-                    log.debug(f"Row error: {e}")
+                # Skip header/empty rows
+                if not file_num or file_num.lower() in ["file number","file no","#","instrument","date"]:
+                    continue
+                if len(file_num) < 3:
+                    continue
 
-            if tbl_records:
-                log.info(f"  Extracted {len(tbl_records)} records from table")
-                records.extend(tbl_records)
-                break  # Found the right table
+                rec = PropertyRecord(
+                    document_number=file_num,
+                    file_date=file_date,
+                    doc_type=doc_type,
+                    grantor=grantor,
+                    grantee=grantee,
+                    legal_description=legal,
+                    source_url=driver.current_url,
+                    days_on_record=calc_days(file_date),
+                    maps_url=make_maps_url(grantor),
+                )
+                if rec.grantor or rec.document_number:
+                    score_record(rec)
+                    records.append(rec)
 
-        if not records:
-            log.warning("  No records extracted — check debug_page.html for table structure")
+            except Exception as e:
+                log.debug(f"Row error: {e}")
+
+        log.info(f"  Extracted {len(records)} records")
 
     except Exception as e:
         log.error(f"Extract error: {e}")
@@ -401,18 +399,16 @@ def extract_harris_rows(driver) -> list:
 def click_harris_next(driver) -> bool:
     """Click next page on Harris County ASP.NET results."""
     try:
-        # Method 1: Look for any link/button with next page text
-        for text in ["Next", "next", "›", "»", ">", "Next >"]:
+        # Method 1: Bootstrap/standard pagination links
+        for text in ["»", "›", "Next", "next", ">"]:
             try:
                 els = driver.find_elements(By.XPATH,
-                    f"//a[normalize-space(text())='{text}'] | "
-                    f"//input[@value='{text}'] | "
-                    f"//span[normalize-space(text())='{text}']/parent::a")
+                    f"//li[not(contains(@class,'disabled'))]/a[normalize-space(text())='{text}']")
                 for el in els:
-                    if el.is_displayed() and el.is_enabled():
+                    if el.is_displayed():
                         driver.execute_script("arguments[0].click();", el)
                         time.sleep(BETWEEN_PAGES)
-                        log.info(f"  Clicked next via text: '{text}'")
+                        log.info(f"  Clicked next via bootstrap pagination: '{text}'")
                         return True
             except: continue
 
@@ -461,10 +457,11 @@ def scrape_harris_selenium():
         # Fill and submit search form
         fill_search_form(driver)
 
-        # Wait for results
+        # Wait for results table to appear
         wait = WebDriverWait(driver, PAGE_LOAD_WAIT)
         try:
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table tr td")))
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,
+                "table.table-condensed, table.table-striped, #ItemPlaceholderContainer")))
             time.sleep(2)
         except TimeoutException:
             log.warning("Timeout waiting for results — saving debug page.")
