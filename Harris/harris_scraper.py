@@ -26,9 +26,12 @@ COUNTY_NAME   = "Harris County, TX"
 SEARCH_URL    = "https://www.cclerk.hctx.net/applications/websearch/RP.aspx"
 DASHBOARD_URL = "https://andrewwinter13-ops.github.io/Bexar-County-Intel/Harris/index.html"
 
-# Date range to search
-DATE_FROM = "01/01/2024"
+# Date range — from Jan 1 of current year to today, grows daily
 DATE_TO   = datetime.utcnow().strftime("%m/%d/%Y")
+DATE_FROM = datetime.utcnow().strftime("%m/01/%Y").replace(
+    datetime.utcnow().strftime("%m"), "01")  # Jan 1 of this year
+DATE_FROM = f"01/01/{datetime.utcnow().year}"
+
 
 MAX_PAGES        = 10
 PAGE_LOAD_WAIT   = 10
@@ -397,10 +400,15 @@ def scrape_harris_selenium():
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "table tr td")))
             time.sleep(2)
         except TimeoutException:
-            log.warning("Timeout waiting for results.")
+            log.warning("Timeout waiting for results — saving debug page.")
             with open("Harris/debug_page.html", "w", encoding="utf-8") as f:
                 f.write(driver.page_source)
             return []
+
+        # Save debug on first run to verify table structure
+        with open("Harris/debug_page.html", "w", encoding="utf-8") as f:
+            f.write(driver.page_source)
+        log.info("Saved debug_page.html")
 
         for page_num in range(1, MAX_PAGES + 1):
             log.info(f"Scraping page {page_num}...")
@@ -566,19 +574,8 @@ def build_dashboard(records, new_lead_doc_numbers=None):
     rows = ""
     for i, r in enumerate(records):
         nb = '<span class="new-badge">NEW</span>' if r.document_number in new_lead_doc_numbers else ""
-        maps_btn = f'<a href="{r.maps_url}" target="_blank" class="maps-link">📍 Maps</a>' if r.maps_url else ""
-        # Only show lookup button for individual names, not companies
-        skip_co = ["INTERNAL REVENUE","STATE OF TEXAS","WELLS FARGO","US BANK",
-                   "JP MORGAN","QUICKEN","BANK","LLC","INC","CORP","TRUST","MORTGAGE","SERVICE"]
-        is_company = any(kw in r.grantor.upper() for kw in skip_co)
-        if not is_company:
-            # Search Google for the address on HCAD — most reliable approach
-            search_term = r.property_address if r.property_address else r.grantor
-            cad_url = f"https://www.google.com/search?q={urllib.parse.quote_plus(search_term + ' hcad.org Harris County property')}"
-            cad_btn = f'<a href="{cad_url}" target="_blank" class="cad-link">🏠 HCAD</a>'
-        else:
-            cad_btn = ""
-        ml = f'<div class="lookup-btns">{maps_btn}{cad_btn}</div>'
+        maps_btn = f'<a href="{r.maps_url}" target="_blank" class="maps-link">📍 Maps</a>' if r.maps_url else "—"
+        ml = f'<div class="lookup-btns">{maps_btn}</div>'
         addr = r.property_address if r.property_address else (r.legal_description[:40]+"…" if len(r.legal_description)>40 else r.legal_description)
         rows += (f'<tr class="record-row {"hot-row" if r.seller_score>=50 else ""}" '
                  f'data-score="{r.seller_score}" '
