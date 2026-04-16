@@ -323,10 +323,8 @@ def extract_harris_rows(driver) -> list:
     """Extract records from Harris County results table."""
     records = []
     try:
-        # Target the specific table we identified: class=table-condensed table-hover table-striped
-        # or id=ItemPlaceholderContainer
+        # Target the specific table: class=table-condensed table-hover table-striped
         target_rows = []
-
         for sel in [
             "table.table-condensed tr",
             "table.table-striped tr",
@@ -353,21 +351,36 @@ def extract_harris_rows(driver) -> list:
                     try: return cells[i].text.strip() or d
                     except: return d
 
-                # Log first record found
+                # Log first record
                 if not records:
-                    log.info(f"  First row {len(cells)} cells: {[cell(i) for i in range(min(8,len(cells)))]}")
+                    all_cells = [cell(i) for i in range(min(10, len(cells)))]
+                    log.info(f"  First row {len(cells)} cells: {all_cells}")
 
-                file_num  = cell(0)
-                file_date = cell(1)
-                doc_type  = cell(2)
-                grantor   = cell(3)
-                grantee   = cell(4)
-                legal     = cell(5)
+                # From the log we can see:
+                # cell(0) = empty checkbox
+                # cell(1) = doc number (RP-2026-99835)
+                # cell(2) = file date (03/17/2026)
+                # cell(3) = doc type abbreviation (RL, BL, etc)
+                # cell(4) = "Grantor: NAME"
+                # cell(5) = "Grantee: NAME"
+                file_num  = cell(1)
+                file_date = cell(2)
+                doc_type  = cell(3)
+
+                # Strip "Grantor: " and "Grantee: " prefixes
+                grantor_raw = cell(4)
+                grantee_raw = cell(5)
+                grantor = grantor_raw.replace("Grantor:", "").replace("Grantor :", "").strip()
+                grantee = grantee_raw.replace("Grantee:", "").replace("Grantee :", "").strip()
+
+                # Legal description may be in later cells
+                legal = cell(6) if len(cells) > 6 else ""
+                legal = legal.replace("Legal:", "").replace("Subdivision:", "").strip()
 
                 # Skip header/empty rows
-                if not file_num or file_num.lower() in ["file number","file no","#","instrument","date"]:
+                if not file_num or len(file_num) < 3:
                     continue
-                if len(file_num) < 3:
+                if file_num.lower() in ["file number", "file no", "#", "instrument"]:
                     continue
 
                 rec = PropertyRecord(
