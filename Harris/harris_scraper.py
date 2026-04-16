@@ -572,13 +572,9 @@ def build_dashboard(records, new_lead_doc_numbers=None):
                    "JP MORGAN","QUICKEN","BANK","LLC","INC","CORP","TRUST","MORTGAGE","SERVICE"]
         is_company = any(kw in r.grantor.upper() for kw in skip_co)
         if not is_company:
-            if r.property_address:
-                # If we have the address, search HCAD by address
-                addr_enc = urllib.parse.quote_plus(r.property_address.split(",")[0].strip())
-                cad_url = f"https://public.hcad.org/records/Real/byAddress.asp?stnum=&rnumb={addr_enc}&zip=&taxyear=2025"
-            else:
-                # Fallback to Google search scoped to HCAD
-                cad_url = f"https://www.google.com/search?q=site:public.hcad.org+{urllib.parse.quote_plus(r.grantor)}"
+            # Search Google for the address on HCAD — most reliable approach
+            search_term = r.property_address if r.property_address else r.grantor
+            cad_url = f"https://www.google.com/search?q={urllib.parse.quote_plus(search_term + ' hcad.org Harris County property')}"
             cad_btn = f'<a href="{cad_url}" target="_blank" class="cad-link">🏠 HCAD</a>'
         else:
             cad_btn = ""
