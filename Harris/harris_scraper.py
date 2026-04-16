@@ -563,14 +563,22 @@ def _parse_lot_block(legal_desc: str):
 
 
 def lookup_hcad_addresses(records):
-    """Query Harris County GIS API using Lot/Block from legal description."""
+    """
+    Query Harris County GIS API for property addresses using owner name.
+    Legal descriptions are not available from the recorder site so we use grantor name.
+    """
+    skip_co = ["INTERNAL REVENUE","STATE OF TEXAS","WELLS FARGO","US BANK",
+                "JP MORGAN","QUICKEN","BANK","LLC","INC","CORP","TRUST",
+                "MORTGAGE","SERVICE","FEDERAL","FINANCE","CAPITAL","FUND"]
+
     targets = [r for r in records
                if r.seller_score >= ADDRESS_LOOKUP_MIN_SCORE
                and not r.property_address
-               and r.legal_description]
+               and r.grantor
+               and not any(kw in r.grantor.upper() for kw in skip_co)]
 
     if not targets:
-        log.info("No 70+ records need address lookup.")
+        log.info("No 70+ individual-name records need address lookup.")
         return
 
     log.info(f"Harris GIS address lookup for {len(targets)} records scoring 70+...")
@@ -581,17 +589,18 @@ def lookup_hcad_addresses(records):
 
     for i, rec in enumerate(targets):
         try:
-            lot, blk = _parse_lot_block(rec.legal_description)
-            if not lot or not blk:
-                log.debug(f"  No lot/block: {rec.legal_description[:50]}")
+            name = rec.grantor.strip().upper()
+            last = name.split(",")[0].strip() if "," in name else name.split()[0].strip()
+            last = last.replace("'", "''")
+            if len(last) < 3:
                 continue
 
             params = {
-                "where": f"lot = '{lot}' AND block = '{blk}'",
-                "outFields": "lot,block,site_addr_1,site_addr_2,site_addr_3",
+                "where": f"owner_name_1 LIKE '{last}%'",
+                "outFields": "owner_name_1,site_addr_1,site_addr_2,site_addr_3",
                 "returnGeometry": "false",
                 "f": "json",
-                "resultRecordCount": 5,
+                "resultRecordCount": 10,
             }
             resp = session.get(HARRIS_GIS, params=params, timeout=10)
             data = resp.json()
@@ -601,22 +610,25 @@ def lookup_hcad_addresses(records):
                 continue
 
             addr = ""
+            name_parts = [p for p in name.split() if len(p) > 2]
             for feat in data.get("features", []):
                 attrs = feat.get("attributes", {})
-                parts = [attrs.get("site_addr_1",""), attrs.get("site_addr_2",""), attrs.get("site_addr_3","")]
-                addr = " ".join(p for p in parts if p).strip()
-                if addr and len(addr) > 5:
-                    addr = addr.title()
-                    break
+                owner = (attrs.get("owner_name_1") or "").upper()
+                if sum(1 for p in name_parts if p in owner) >= 2:
+                    parts = [attrs.get("site_addr_1",""), attrs.get("site_addr_2",""), attrs.get("site_addr_3","")]
+                    addr = " ".join(p for p in parts if p).strip()
+                    if addr and len(addr) > 5:
+                        addr = addr.title()
+                        break
 
             if addr:
                 rec.property_address = addr
                 q = urllib.parse.quote(f"{addr}, Houston, TX")
                 rec.maps_url = f"https://www.google.com/maps/search/?api=1&query={q}"
                 found += 1
-                log.info(f"  [{i+1}/{len(targets)}] Lot {lot} Blk {blk} → {addr}")
+                log.info(f"  [{i+1}/{len(targets)}] {rec.grantor} → {addr}")
             else:
-                log.info(f"  [{i+1}/{len(targets)}] Lot {lot} Blk {blk} → not found")
+                log.debug(f"  [{i+1}/{len(targets)}] {rec.grantor} → not found")
 
             time.sleep(0.3)
 
